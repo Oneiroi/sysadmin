@@ -41,7 +41,17 @@ function go {
 		exit 0;
 	fi;
 	
-	echo $CMD;
+	ARRAY=(`echo "$CMD" | grep -v "row" | awk '{print $2}'`);
+	
+	EMAIL=0;
+	for (( i = 0 ; i < ${#names[@]} ; i++ ))
+	do
+		EMAIL=$(($i+1));
+		echo "${names[$EMAIL]} (${names[$i]})";
+		i++;
+	done
+	
+	
 }
 
 if [ -z "$1" ]; then
