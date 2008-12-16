@@ -29,7 +29,7 @@ function go {
 		echo "Can't find mysql client!";
 		exit 0;
 	fi
-	SQL="'SELECT count($FIELD) as CNT, $FIELD FROM $TABLE GROUP BY $FIELD HAVING CNT > 1\G'";
+	SQL="'SELECT count($FIELD) as CNT, $FIELD FROM $TBL GROUP BY $FIELD HAVING CNT > 1\G'";
 	#mysql client uses stderr when error occurs. We need the info so 2>&1 redirects stderr to stdout
 	CMD=`/usr/bin/mysql -h $SERV -u $USR -p$PWD $DB -e $SQL 2>&1`;
 	
