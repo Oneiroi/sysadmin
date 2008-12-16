@@ -44,6 +44,11 @@ function go {
 	echo $CMD;
 }
 
+if [ -z "$1" ]; then
+	usage;
+	exit 0;
+fi
+
 while getopts "hs:u:p:t:f:" optionName; do
 	case "$optionName" in
 		h) usage;;
