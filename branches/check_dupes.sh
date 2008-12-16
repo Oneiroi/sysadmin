@@ -31,24 +31,29 @@ function go {
 	fi
 	SQL="'SELECT count($FIELD) as CNT, $FIELD FROM $TBL GROUP BY $FIELD HAVING CNT > 1\G'";
 	#mysql client uses stderr when error occurs. We need the info so 2>&1 redirects stderr to stdout
-	CMD=`/usr/bin/mysql -h $SERV -u $USR -p$PWD $DB -e $SQL 2>&1`;
+	CMD="/usr/bin/mysql -h $SERV -u $USR -p$PWD $DB -e $SQL 2>&1";
+	
+	echo $CMD; # debug
+	
+	EXEC=`$CMD`;
 	
 	ERR=0;
-	ERR=$((`echo "$CMD" | grep "ERROR" | wc -l`));
+	ERR=$((`echo "$EXEC" | grep "ERROR" | wc -l`));
 	
 	if [ $ERR -gt 0 ]; then
 		echo $CMD;
 		exit 0;
 	fi;
 	
-	ARRAY=(`echo "$CMD" | grep -v "row" | awk '{print $2}'`);
+	ARRAY=(`echo "$EXEC" | grep -v "row" | awk '{print $2}'`);
 	
-	EMAIL=0;
+	DUPE=0;
+	
 	for (( i = 0 ; i < ${#ARRAY[@]} ; i++ ))
 	do
-		EMAIL=$(($i+1));
-		echo "${ARRAY[$EMAIL]} (${ARRAY[$i]})";
-		i=$EMAIL;
+		DUPE=$(($i+1));
+		echo "${ARRAY[$DUPE]} (${ARRAY[$i]})";
+		i=$DUPE;
 	done
 	
 	
