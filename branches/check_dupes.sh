@@ -49,7 +49,7 @@ if [ -z "$1" ]; then
 	exit 0;
 fi
 
-while getopts "hs:u:p:t:f:" optionName; do
+while getopts "hs:u:p:d:t:f:" optionName; do
 	case "$optionName" in
 		h) usage;;
 		s) SERV=$OPTARG;;
