@@ -44,11 +44,11 @@ function go {
 	ARRAY=(`echo "$CMD" | grep -v "row" | awk '{print $2}'`);
 	
 	EMAIL=0;
-	for (( i = 0 ; i < ${#names[@]} ; i++ ))
+	for (( i = 0 ; i < ${#ARRAY[@]} ; i++ ))
 	do
 		EMAIL=$(($i+1));
-		echo "${names[$EMAIL]} (${names[$i]})";
-		i++;
+		echo "${ARRAY[$EMAIL]} (${ARRAY[$i]})";
+		i=$EMAIL;
 	done
 	
 	
