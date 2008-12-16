@@ -25,7 +25,9 @@ function usage {
 }
 
 function go {
-	if [ ! -x '/usr/bin/mysql' ]; then
+	MYSQL=$(which mysql);
+
+	if [ ! -x "$MYSQL" ]; then
 		echo "Can't find mysql client!";
 		exit 0;
 	fi
