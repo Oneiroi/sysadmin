@@ -37,7 +37,7 @@ function go {
 	
 	echo $CMD; # debug
 	
-	EXEC=`$CMD`;
+	EXEC="$($CMD)";
 	
 	ERR=0;
 	ERR=$((`echo "$EXEC" | grep "ERROR" | wc -l`));
