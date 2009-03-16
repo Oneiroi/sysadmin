@@ -13,6 +13,7 @@
 	missingok
 	notifempty
 	sharedscripts
+	create 660 mysql mysql
 	portrotate
 		/usr/bin/mysqladmin flush-logs
 	endscript
