@@ -1,3 +1,11 @@
+#
+# mySQL slow log rotation script by D.Busby
+# place this script in /etc/logrotate.d/ or your appropriate logrotate dir.
+# http://creativecommons.org/licenses/by-sa/2.0/uk/ CC BY-SA
+#
+# NOTE: if you are reliant on binlogs i.e. for replication, 'flush logs' closes the current binlog and moves to the next itteration of log files
+# You should test this does not cause an issue with your deployment before using this script
+# 
 /var/log/mysql-slow.log {
 	weekly
 	rotate 3
