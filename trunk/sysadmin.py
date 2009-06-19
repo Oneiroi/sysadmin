@@ -13,6 +13,7 @@ try:
 except ImportError, e:
     print 'Missing Library'
     print e
+    sys.exit(1)
 
 
 class sysadmin:
