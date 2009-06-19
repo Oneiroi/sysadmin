@@ -146,8 +146,11 @@ class sysadmin:
         rss = 0
         
         for line in set:
-            vsz += int(line[4])
-            rss += int(line[5])
+            try:
+                vsz += int(line[4])
+                rss += int(line[5])
+            except IndexError, e:
+                self.error(e)
         count = len(set)
         print '--- Memory Usage Report For %s ---' % (filter)
         print 'PID Count: %s' % (count)
@@ -156,9 +159,9 @@ class sysadmin:
         print 'MEM/PID: %sMB' % (round((rss/count)/1024,2)) 
         
         
-    def error(self,str):
+    def error(self,e):
         self.verbose('error()')
-        print 'ERROR: ',str
+        print 'ERROR: ',e
         sys.exit(1)
         
     def verbose(self,str):
@@ -210,26 +213,30 @@ def usage():
     
     return help
 
-def main():         
+def main():
     sa = sysadmin()
+    sa.verbose('main()')         
     parser = OptionParser(usage=usage(), version="%prog 1.0")
     parser.add_option('-c','--command', dest='command', help='Command to run')
     parser.add_option('-d','--data', dest='data', help='CSV Style data')
     
     (options,args) = parser.parse_args()
     
+    sa.verbose('args parsed')
+    
     if options.command == None:
         parser.error('Command is a required input')
     elif options.data == None:
         parser.error('Data is a required input')
     else:
+        sa.verbose('Command: %s' % (options.command))
         opts = options.data.split(',')
         
-        values = {
-                  'iconv': lambda: sa._iconv(opts)
-                  }
-        
-        values.get(options.command,usage())
+        #todo: replace this, couldn't get switch statements working properly!
+        if options.command == 'iconv':
+            sa._iconv(opts)
+        elif options.command == 'appmem':
+            sa.appmem(opts[0])
     
        
     
