@@ -6,10 +6,13 @@
     @Copyright: Copyright (c) 2009 David Busby.
     @License: http://creativecommons.org/licenses/by-sa/2.0/uk/ CC BY-SA
 """
-import ConfigParser,os,sys,re,time,hashlib
-from zlib import crc32
-from optparse import OptionParser,OptionGroup, OptParseError
-
+try:
+    import ConfigParser,os,sys,re,time,hashlib
+    from zlib import crc32
+    from optparse import OptionParser,OptionGroup, OptParseError
+except ImportError, e:
+    print 'Missing Library'
+    print e
 
 
 class sysadmin:
