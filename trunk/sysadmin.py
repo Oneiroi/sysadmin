@@ -66,7 +66,22 @@ class sysadmin:
         self._exec(cmd)
     
     def _get_filesize(self,path):
-        return os.path.getsize(path)
+        try:
+            return os.path.getsize(path)
+        except OSError, e:
+            self.error(e)
+    
+    def checksum(self,path):
+        self.verbose('checksum()')
+        
+        if version >= 2.5:
+            data = self._readfile(path)
+            chk = self._checksum(data)
+            print '--- Checksums for',path,' ---'
+            print 'MD5: ',chk['md5']
+            print 'CRC32: ',chk['crc32']
+        else:
+            self.error('Attempted to run checksum with incorrect python version, must be >= 2.5  (current %s)' % (version))
     
     def _readfile(self,path):
         self.verbose('_readfile(%s)' % (path))
@@ -230,9 +245,13 @@ def usage():
         Example: -c appmem -d filter
         Note: filter can be the process name i.e. httpd or anything else you wish to filter by i.e. PID
         
-        webuser - This command is used to create a new webuser
+        webuser - This command is used to create a new webuser (incomplete at present do not use)
         Example: -c webuser -d username
         Notes: The majority of the configuration for this command take place under the advanced section of the config file
+        
+        checksum - This command will read a file and provide crc32 and md5 checksums, this does however require Python 2.5 or higher to run
+        Example: -c checksum -d /path/to/file
+        Notes: A Python version of 2.5 or higher is required, also if a file larger than 30MB is selected the user will be required to confirm before proceeding
     """ % (sys.argv[0])
     
     return help
@@ -261,6 +280,8 @@ def main():
             sa._iconv(opts)
         elif options.command == 'appmem':
             sa.appmem(opts[0])
+        elif options.command == 'checksum':
+            sa.checksum(opts[0])
     
        
     
