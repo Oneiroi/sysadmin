@@ -37,7 +37,7 @@ class sysadmin:
         
         self.var = ''
         cwd = os.getcwd()
-        cfgPath = "%s%s" % (cwd,'/conf/sysadmin.conf')
+        cfgPath = "%s%s" % (sys.path[0],'/conf/sysadmin.conf')
 
         cfg = ConfigParser.RawConfigParser()
         cfg.read(cfgPath)
@@ -51,7 +51,9 @@ class sysadmin:
             self.mkdir = cfg.get('core','mkdir')
             self.chown = cfg.get('core','chown')
             
-        except ConfigParser.NoOptionError, e:
+        except ConfigParser.NoOptionError and ConfigParser.NoSectionError, e:
+            #cant use error func here as uses verbose funtion
+            print 'Config file error: ',cfgPath
             print e
             sys.exit(0);
             
