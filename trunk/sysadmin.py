@@ -7,13 +7,28 @@
     @License: http://creativecommons.org/licenses/by-sa/2.0/uk/ CC BY-SA
 """
 try:
-    import ConfigParser,os,sys,re,time,hashlib
+    import ConfigParser,os,sys,re,time
     from zlib import crc32
     from optparse import OptionParser,OptionGroup, OptParseError
 except ImportError, e:
     print 'Missing Library'
     print e
     sys.exit(1)
+
+info = sys.version_info
+version = (info[0] + ((info[1]*1.00)/10))
+
+if version >= 2.5:
+    try:
+        import hashlib
+    except ImportError, e:
+        print 'Missing Library'
+        print e
+        sys.exit(1)
+else:
+    print 'Your python version is < 2.5 (%s.%s)' % (version,info[2])
+    print 'hashlib has not been loaded, checksum functionality will not be enabled'
+
 
 
 class sysadmin:
@@ -87,9 +102,12 @@ class sysadmin:
     
     def _checksum(self,data):
         self.verbose('_checksum()')
-        m = hashlib.md5()
-        m.update(data)
-        return {'md5':m.hexdigest(),'crc32':crc32(data) & 0xffffffff}
+        if version >= 2.5:
+            m = hashlib.md5()
+            m.update(data)
+            return {'md5':m.hexdigest(),'crc32':crc32(data) & 0xffffffff}
+        else:
+            return 'Your version of python does not support hashlib, checksum has not been calculated'
     
     def _iconv(self,opts):
         self.verbose('_iconv()')
