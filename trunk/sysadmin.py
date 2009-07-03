@@ -262,10 +262,10 @@ def usage():
     
     Available commands:
     
-        iconv - This command is used to converted between charecter encoding
+        iconv - This command is used to convert a files contents charecter encoding
         Example: -c iconv -d /path/to/file.ext,latin-1,utf-8
         
-        appmem - This commaned is used to estimate the memory usage of a currently running process
+        appmem - This command is used to estimate the memory usage of a currently running process
         Example: -c appmem -d filter
         Note: filter can be the process name i.e. httpd or anything else you wish to filter by i.e. PID
         
