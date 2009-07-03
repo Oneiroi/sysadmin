@@ -15,7 +15,10 @@ except ImportError, e:
     print e
     sys.exit(1)
 
-if sys.version >= 2.5:
+info = sys.version_info
+version = (info[0] + ((info[1]*1.00)/10))
+
+if version >= 2.5:
     try:
         import hashlib
     except ImportError, e:
