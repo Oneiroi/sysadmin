@@ -7,7 +7,7 @@
     @License: http://creativecommons.org/licenses/by-sa/2.0/uk/ CC BY-SA
 """
 try:
-    import ConfigParser,os,sys,re,time
+    import ConfigParser,os,sys,re,time,string,socket
     from zlib import crc32
     from optparse import OptionParser,OptionGroup, OptParseError
 except ImportError, e:
@@ -15,10 +15,7 @@ except ImportError, e:
     print e
     sys.exit(1)
 
-info = sys.version_info
-version = (info[0] + ((info[1]*1.00)/10))
-
-if version >= 2.5:
+if sys.version >= 2.5:
     try:
         import hashlib
     except ImportError, e:
@@ -50,21 +47,18 @@ class sysadmin:
             self.vhosts = cfg.get('core','vhosts')
             self.mkdir = cfg.get('core','mkdir')
             self.chown = cfg.get('core','chown')
+            self.rbls = cfg.get('sysadmin','rbl_list')
+            self.rbls = self.rbls.split(',')
+            #self.ssl_crt = cfg.get('core','ssl_crt')
+            #self.ssl_key = cfg.get('core','ssl_key')
+            #self.ssl_vhost = cfg.get('core','ssl_vhost')
             
         except ConfigParser.NoOptionError and ConfigParser.NoSectionError, e:
             #cant use error func here as uses verbose funtion
             print 'Config file error: ',cfgPath
             print e
-            sys.exit(0);
+            sys.exit(0);              
             
-    def webuser(self,opts):
-        self.verbose('webuser()')
-        homedir = self.homedir % (opts['usr'])
-        cmd = self.adduser % (homedir, self.shell, opts['usr'])
-        self._exec(cmd)
-        cmd = self.mkdir % ('%s/%s' % (homedir,'public_html'))
-        self._exec(cmd)
-    
     def _get_filesize(self,path):
         try:
             return os.path.getsize(path)
@@ -197,7 +191,34 @@ class sysadmin:
         print 'Total Resident Set Size: %sMB' % (round((rss/1024),2))
         print 'MEM/PID: %sMB' % (round((rss/count)/1024,2)) 
         
+    def rblcheck(self,opts):
+        try:
+            ip = opts[0]
+        except KeyError,e:
+            self.error(e)
         
+        tmp = string.split(ip,".")
+        tmp.reverse()
+        
+        for rbl in self.rbls:
+            lookup = string.join(tmp,".")+"."+rbl
+            
+            try:
+                try:
+                    addr = socket.gethostbyname(lookup)
+                except socket.error, e:
+                    addr=False
+                    #print e
+            except KeyboardInterrupt:
+                print '\n^C Received Aborting RBL Check'
+                sys.exit(0)
+            
+            if addr != False:
+                print 'IP(%s) is listed at RBL(%s)' % (ip,rbl)
+                print 'Returned: %s'  % (addr)
+            else:
+                print 'IP(%s) is not listed at RBL(%s)' % (ip,rbl)
+                    
     def error(self,e):
         self.verbose('error()')
         print 'ERROR: ',e
@@ -245,13 +266,14 @@ def usage():
         Example: -c appmem -d filter
         Note: filter can be the process name i.e. httpd or anything else you wish to filter by i.e. PID
         
-        webuser - This command is used to create a new webuser (incomplete at present do not use)
-        Example: -c webuser -d username
-        Notes: The majority of the configuration for this command take place under the advanced section of the config file
-        
         checksum - This command will read a file and provide crc32 and md5 checksums, this does however require Python 2.5 or higher to run
         Example: -c checksum -d /path/to/file
         Notes: A Python version of 2.5 or higher is required, also if a file larger than 30MB is selected the user will be required to confirm before proceeding
+        
+        rblcheck - This command will attempt to check if the provided IP address is listed at several RBL's
+        Example: -c rblcheck -d 123
+        
+        
     """ % (sys.argv[0])
     
     return help
@@ -282,6 +304,10 @@ def main():
             sa.appmem(opts[0])
         elif options.command == 'checksum':
             sa.checksum(opts[0])
+        elif options.command == 'webuser':
+            sa.webuser(opts)
+        elif options.command == 'rblcheck':
+            sa.rblcheck(opts)
     
        
     
