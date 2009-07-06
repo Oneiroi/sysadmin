@@ -375,7 +375,7 @@ def usage():
         
         httpd_stats (BETA) - This command will attempt to provide rough statistics based on the provided apache log file.
         Example: -c httpd_status -d /path/to/access.log
-        Notes: This function was writting assuming combined output, this may not work with other logtypes
+        Notes: This function assumes combined output, this may not work with other log types
         
         
     """ % (sys.argv[0])
