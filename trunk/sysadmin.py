@@ -370,12 +370,12 @@ def usage():
         Example: -c checksum -d /path/to/file
         Notes: A Python version of 2.5 or higher is required, also if a file larger than 30MB is selected the user will be required to confirm before proceeding
         
-        rblcheck - This command will attempt to check if the provided IP address is listed at several RBL's
+        rblcheck - This command will attempt to check if the provided IP address is listed at several RBLs
         Example: -c rblcheck -d 123
         
-        httpd_stats - This command will attempt to provide rough statistics based on the provided apache log file.
+        httpd_stats (BETA) - This command will attempt to provide rough statistics based on the provided apache log file.
         Example: -c httpd_status -d /path/to/access.log
-        Note: This function was writting assuming combined output, this may nto work with other logtypes
+        Notes: This function was writting assuming combined output, this may not work with other logtypes
         
         
     """ % (sys.argv[0])
