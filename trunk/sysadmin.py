@@ -221,11 +221,108 @@ class sysadmin:
                 print 'Returned: %s'  % (addr)
             else:
                 print 'IP(%s) is not listed at RBL(%s)' % (ip,rbl)
-                    
-    def error(self,e):
+    
+    def httpd_stats(self,opts):
+        #this was not fun to type!
+        codes = {
+                     100:{'desc':'continue','count':0},
+                     101:{'desc':'switching protocol','count':0},
+                     200:{'desc':'OK','count':0},
+                     201:{'desc':'created','count':0},
+                     202:{'desc':'accepted','count':0},
+                     203:{'desc':'Non-Authoritative Information','count':0},
+                     204:{'desc':'No content','count':0},
+                     205:{'desc':'Reset content','count':0},
+                     206:{'desc':'Partial content','count':0},
+                     300:{'desc':'Multiple choices','count':0},
+                     301:{'desc':'Moved permanently','count':0},
+                     302:{'desc':'Found','count':0},
+                     303:{'desc':'See other','count':0},
+                     304:{'desc':'Not modified','count':0},
+                     305:{'desc':'Use proxy','count':0},
+                     #306 deprecated
+                     307:{'desc':'Temporary redirect','count':0},
+                     400:{'desc':'Bad request','count':0},
+                     401:{'desc':'PUnauthorised','count':0},
+                     402:{'desc':'Payment required','count':0},
+                     403:{'desc':'Forbidden','count':0},
+                     404:{'desc':'Not found','count':0},
+                     405:{'desc':'Method not allowed','count':0},
+                     406:{'desc':'Not acceptable','count':0},
+                     407:{'desc':'Proxy Auth Required','count':0},
+                     408:{'desc':'Request timeout','count':0},
+                     409:{'desc':'Conflict','count':0},
+                     410:{'desc':'Gone','count':0},
+                     411:{'desc':'Length required','count':0},
+                     412:{'desc':'Precondition Failed','count':0},
+                     413:{'desc':'Request Entity Too Large','count':0},
+                     414:{'desc':'Request-URI Too Long','count':0},
+                     415:{'desc':'Unsupported Media Type','count':0},
+                     416:{'desc':'Requested Range Not Satisfiable','count':0},
+                     417:{'desc':'Expectation Failed','count':0},
+                     500:{'desc':'Internal Server Error','count':0},
+                     501:{'desc':'Not Implemented','count':0},
+                     502:{'desc':'Bad Gateway','count':0},
+                     503:{'desc':'Service Unavailable','count':0},
+                     504:{'desc':'Gateway Timeout','count':0},
+                     505:{'desc':'HTTP Version Not Supported','count':0}
+                 }
+        
+        if os.path.isfile(opts[0]):
+            raw = self._readfile(opts[0])
+            lines = raw.split('\n')
+            bytes = 0
+            rcount = 0
+            for line in lines:
+                dat = line.split(' ')
+                #at this split the status code should be in dat[8] and the bytes transfered in dat[9]
+                
+                try:
+                    rcode = re.split('\D+',dat[8])[0].replace(' ','')
+                    if len(rcode) > 0:
+                        rcode = self._toint(rcode)
+                    else:
+                        rcode = 0
+                    tmp = re.split('\D+',dat[9])[0].replace(' ','')
+                    if len(tmp) > 0:
+                        bytes += self._toint(tmp)
+                    else:
+                        bytes += 0
+                    try:
+                        codes[rcode]['count'] += 1
+                    except KeyError, e:
+                        print 'Got invalid response code: ',rcode, 'DATA(',dat,')'
+                    rcount += 1
+                except IndexError, e:
+                    print dat,e
+            
+            print '--- HTTP Code stats ---'    
+            for code in codes:
+                if codes[code]['count'] > 0:
+                    print code,codes[code]['desc'],':',codes[code]['count']
+            
+            print '--- Bandwidth stats ---'
+            print 'Requests:',rcount
+            print 'Bytes:',bytes
+            print 'Megabytes:',round((bytes/1024.00/1024.00),2)
+            print 'Gigabytes:',round((bytes/1024.00/1024.00/1024.00),2)
+                
+        else:
+            self.error('404 file not found! %s ' % (opts[0]))  
+            
+    def _toint(self,str):
+        try:
+            str = str.strip()
+            return int(''.join([c for c in str if c in '1234567890']))
+        except ValueError, e:
+            self.error('_toint() error %s' % (e),exit=False)   
+        
+                          
+    def error(self,e,exit=True):
         self.verbose('error()')
         print 'ERROR: ',e
-        sys.exit(1)
+        if exit:
+            sys.exit(1)
         
     def verbose(self,str):
         if self.v:
@@ -276,6 +373,10 @@ def usage():
         rblcheck - This command will attempt to check if the provided IP address is listed at several RBL's
         Example: -c rblcheck -d 123
         
+        httpd_stats - This command will attempt to provide rough statistics based on the provided apache log file.
+        Example: -c httpd_status -d /path/to/access.log
+        Note: This function was writting assuming combined output, this may nto work with other logtypes
+        
         
     """ % (sys.argv[0])
     
@@ -311,7 +412,8 @@ def main():
             sa.webuser(opts)
         elif options.command == 'rblcheck':
             sa.rblcheck(opts)
-    
+        elif options.command == 'httpd_stats':
+            sa.httpd_stats(opts)
        
     
                 
