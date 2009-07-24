@@ -15,6 +15,10 @@ except ImportError, e:
     print e
     sys.exit(1)
 
+#===============================================================================
+# Check the current running version of python
+# @todo: this should be improved
+#===============================================================================
 info = sys.version_info
 version = (info[0] + ((info[1]*1.00)/10))
 
@@ -30,9 +34,14 @@ else:
     print 'hashlib has not been loaded, checksum functionality will not be enabled'
 
 
-
+#===============================================================================
+# The main sysadmin class
+#===============================================================================
 class sysadmin:
     
+#===============================================================================
+#    sysadmin construct, loads config and sets up class variables
+#===============================================================================
     def __init__(self):
         
         self.var = ''
@@ -60,14 +69,42 @@ class sysadmin:
             #cant use error func here as uses verbose funtion
             print 'Config file error: ',cfgPath
             print e
-            sys.exit(0);              
+            sys.exit(0)
             
+#===============================================================================
+#    _get_filesize, attempts to get the filesize in bytes of the provided path
+#    @param path: string
+#===============================================================================
     def _get_filesize(self,path):
         try:
             return os.path.getsize(path)
         except OSError, e:
             self.error(e)
-    
+#===============================================================================
+#    windowsreturn, this function is used to strip out windows file encodings, such as \r\n for carriage returns
+#    @param path: string
+#===============================================================================
+    def windowsreturn(self,path):
+        data = self._readfile(path)
+        data = re.subn('\r','',data)
+        if data[1] > 0:
+            str = data[0]
+            q = 'I am about to replace %s occurances of \\r and overwrite the file, are you sure you want to proceed?' % (data[1])
+            response = raw_input(q)
+            while response not in ('y','n'):
+                print 'Invalid response, please enter y or n'
+                response = raw_input(q)
+            if response == 'y':
+                self._writefile(path,str)
+                print 'Done'
+            elif response == 'n':
+                print 'Aborted on user request'
+        else:
+            print 'I could not find any occurances of \\r in the provided file, no changes have been made'
+#===============================================================================
+#    checksum, this function returns the md5, and crc32 checksums, if the current running version is above 2.5
+#    @param path: string
+#===============================================================================
     def checksum(self,path):
         self.verbose('checksum()')
         
@@ -79,7 +116,25 @@ class sysadmin:
             print 'CRC32: ',chk['crc32']
         else:
             self.error('Attempted to run checksum with incorrect python version, must be >= 2.5  (current %s)' % (version))
-    
+#===============================================================================
+#    writefile, as the name suggest this function writes data to a file, it opens it up in w+ mode which truncates the file to zero length
+#    then writes the data
+#    @param path: string
+#    @para data: string
+#===============================================================================
+    def _writefile(self,path,data):
+        self.verbose('_writefile(%s)' % (path))
+        try:
+            f = file(path,'w+')
+            f.write(data)
+        except IOError, e:
+            error = 'Failed to write data error(%s)' % (e)
+            error = '%s Dumping data <<< START\n%s\n<<<END\n' % (e,data)
+            self.error(e)
+#===============================================================================
+#    readfile, as the name sugges this function is used to read a file into memory, if the file is above 30mb, the user will be prompted to confirm
+#    @param path: string 
+#===============================================================================
     def _readfile(self,path):
         self.verbose('_readfile(%s)' % (path))
         #bytes before prompting occurs
@@ -377,6 +432,10 @@ def usage():
         Example: -c httpd_status -d /path/to/access.log
         Notes: This function assumes combined output, this may not work with other log types
         
+        windowsreturn (BETA) - This command will remove all \\r (^M) chars from a file, windows typically uses \\r\\n for carriage returns, this causes issues particuarly when used in bash scripts
+        Example: -c windowsreturn -d /path/to/file
+        Notes: This will overwrite the original file, as such make sure you have a backup
+        
         
     """ % (sys.argv[0])
     
@@ -414,6 +473,10 @@ def main():
             sa.rblcheck(opts)
         elif options.command == 'httpd_stats':
             sa.httpd_stats(opts)
+        elif options.command == 'windowsreturn':
+            sa.windowsreturn(opts[0])
+        else:
+            print 'Command not found "%s"' % (options.command)
        
     
                 
