@@ -453,6 +453,16 @@ Are you sure you wish to continue?:"""
                         print path,fpath,hashes1[fpath]
                         print path2,fpath,hashes2[fpath]
                         
+                print 'Now comparing',path2,'to',path1
+                
+                for fpath in paths2:
+                    if fpath not in paths1:
+                        print 'Missing File:',fpath,'Does not exist in',path
+                    elif (hashes2[fpath]['md5'] != hashes1[fpath]['md5']) or (hashes2[fpath]['crc32'] != hashes1[fpath]['crc32']):
+                        print 'File HASH fail:',fpath,'file hashes do not match'
+                        print path2,fpath,hashes2[fpath]
+                        print path,fpath,hashes1[fpath]
+                        
                 print '--- End fscompare ---'
                         
             
