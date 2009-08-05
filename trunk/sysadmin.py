@@ -7,9 +7,10 @@
     @License: http://creativecommons.org/licenses/by-sa/2.0/uk/ CC BY-SA
 """
 try:
-    import ConfigParser,os,sys,re,time,string,socket
+    import ConfigParser,os,sys,re,time,string,socket,threading,thread
     from zlib import crc32
     from optparse import OptionParser,OptionGroup, OptParseError
+    from recipe_440560 import *
 except ImportError, e:
     print 'Missing Library'
     print e
@@ -176,7 +177,7 @@ class sysadmin:
             m.update(data)
             return {'md5':m.hexdigest(),'crc32':crc32(data) & 0xffffffff}
         else:
-            return 'Your version of python does not support hashlib, checksum has not been calculated'
+            return {'md5':'hashlib not loaded','crc32':crc32(data) & 0xffffffff}
     
     def _iconv(self,opts):
         self.verbose('_iconv()')
@@ -391,10 +392,126 @@ class sysadmin:
             str += line
 
         return str.rstrip('\n')
-
-"""
-stubb class for iconv charset opts
-"""
+    
+    def _walkhash(self,path):
+        from os.path import join, getsize
+        data = []
+        for root, dirs, files in os.walk(path):
+            for fname in files:
+                fpath = join(root,fname)
+                fpath = string.replace(fpath,path,'')
+                data.append({'path':fpath,'hash':self._checksum(fpath)})
+        return data
+    
+    def filesystem_compare(self,opts):
+        
+        str ="""
+Depending on the number of files and folders, this comparrison can take a very long time, and be quite heavy on CPU usage.
+Are you sure you wish to continue?:"""
+        response = raw_input(str)
+        while response not in ('y','n'):
+            str = 'Invalid option, reply y or n:'
+            response = raw_input(str)
+        if response == 'n':
+            print 'Exiting on user request...'
+            sys.exit(0)
+        elif response == 'y':
+            
+            path = opts[0]
+            path2 = opts[1]
+            
+            if not os.path.isdir(path):
+                print 'Path is not directory:',path
+                sys.exit(1)
+            elif not os.path.isdir(path2):
+                print 'Path is not directory:',path2
+                sys.exit(1)
+            else:
+                #path1
+                data1 = self._walkhash(path)
+                #path2
+                data2 = self._walkhash(path2)
+                #paths
+                paths1 = []
+                paths2 = []
+                hashes1 = {}
+                hashes2 = {}
+                for fdata in data1:
+                    paths1.append(fdata['path'])
+                    hashes1[fdata['path']] = fdata['hash']
+                for fdata in data2:
+                    paths2.append(fdata['path'])
+                    hashes2[fdata['path']] = fdata['hash']
+                print '--- Begin fscompare ---'
+                print 'Now comparing',path,'to',path2
+                
+                for fpath in paths1:
+                    if fpath not in paths2:
+                        print 'Missing File:',fpath,'Does not exist in',path2
+                    elif (hashes1[fpath]['md5'] != hashes2[fpath]['md5']) or (hashes1[fpath]['crc32'] != hashes2[fpath]['crc32']):
+                        print 'File HASH fail:',fpath,'file hashes do not match'
+                        print path,fpath,hashes1[fpath]
+                        print path2,fpath,hashes2[fpath]
+                        
+                print '--- End fscompare ---'
+                        
+            
+                
+        
+#===============================================================================
+#    This function is incomplete, do not use
+#===============================================================================
+    def netscan(self,cidr):
+        str = """
+This scanner is to be used at your own risk, and I advise only on a network where you have permission to scan.
+This scanner is multithreaded so in large networks can cause high load on the system it is running from.
+            
+You must now confirm that you have the legal right to proceed with this scan.
+        """
+        print str
+        
+        str = 'Scanning networks can be illegal, are you sure you want to proceed? (y/n):'
+        response = raw_input(str)
+        while response not in ('y','n'):
+            print 'Invalid optiion, reply y or n'
+            response = raw_input(str)
+        if response == 'n':
+            print 'Exiting on user request...'
+            sys.exit(0)
+        elif response == 'y':
+            str = """
+You have chose to proceed with this network scan, you must now choose a scan type
+p - Ping scan, attempts an ICMP ping of each ip in the suplied range
+s - SYN ACK scan, stealth port scanning assumes all hosts are up (will not ping) and attempts SYN ACK of common ports
+Scan type:"""
+        response = raw_input(str)
+        while response not in ('p','s'):
+            print 'Invalid optiion, reply p or s'
+            response = raw_input(str)
+        net = IPv4Addr(cidr)
+        print net
+            
+    
+class pingthread(threading.Thread):
+    def __init__(self, threadID,name,counter,ip,app):
+        self.threadID = threadID
+        self.name = name
+        self.counter = counter
+        self.ip =  ip
+        self.app = app
+        threading.Thread.__init__(self)
+    
+    def run(self):
+        data = self.app._exec('ping -q -c2 %s' % (self.ip))
+        search = re.compile('(\d) received')
+        response = ('Host down','Partial Response','Host Alive')
+        res = re.findall(search, data)
+        if res:
+            print response[int(res[0])]
+        
+#===============================================================================
+# stubb class for iconv charset opts
+#===============================================================================
 class iconv_opts:
     path = None
     cs_from = None
@@ -436,6 +553,9 @@ def usage():
         Example: -c windowsreturn -d /path/to/file
         Notes: This will overwrite the original file, as such make sure you have a backup
         
+        fscompare (BETA) - This command will attempt to compare firles between two directories, checking if they exist and their file hashes
+        Example: -c fscompare -d /path/to/folder1,/path/toi/folder2
+                
         
     """ % (sys.argv[0])
     
@@ -475,6 +595,8 @@ def main():
             sa.httpd_stats(opts)
         elif options.command == 'windowsreturn':
             sa.windowsreturn(opts[0])
+        elif options.command == 'fscompare':
+            sa.filesystem_compare(opts)
         else:
             print 'Command not found "%s"' % (options.command)
        
