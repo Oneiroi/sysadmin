@@ -10,7 +10,6 @@ try:
     import ConfigParser,os,sys,re,time,string,socket,threading,thread
     from zlib import crc32
     from optparse import OptionParser,OptionGroup, OptParseError
-    from recipe_440560 import *
 except ImportError, e:
     print 'Missing Library'
     print e
