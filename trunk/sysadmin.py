@@ -540,7 +540,7 @@ def usage():
     
     Available commands:
     
-        iconv - This command is used to convert a files contents charecter encoding
+        iconv - This command is used to convert a files contents character encoding
         Example: -c iconv -d /path/to/file.ext,latin-1,utf-8
         
         appmem - This command is used to estimate the memory usage of a currently running process
@@ -558,11 +558,11 @@ def usage():
         Example: -c httpd_status -d /path/to/access.log
         Notes: This function assumes combined output, this may not work with other log types
         
-        windowsreturn (BETA) - This command will remove all \\r (^M) chars from a file, windows typically uses \\r\\n for carriage returns, this causes issues particuarly when used in bash scripts
+        windowsreturn (BETA) - This command will remove all \\r (^M) chars from a file, windows typically uses \\r\\n for carriage returns, this causes issues particularly when used in bash scripts
         Example: -c windowsreturn -d /path/to/file
         Notes: This will overwrite the original file, as such make sure you have a backup
         
-        fscompare - This command will attempt to compare firles between two directories, checking if they exist and their file hashes
+        fscompare - This command will attempt to compare files between two directories, checking if they exist and their file hashes
         Example: -c fscompare -d /path/to/folder1,/path/toi/folder2
                 
         
