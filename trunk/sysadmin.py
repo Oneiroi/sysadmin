@@ -452,7 +452,7 @@ Are you sure you wish to continue?:"""
                         print path,fpath,hashes1[fpath]
                         print path2,fpath,hashes2[fpath]
                         
-                print 'Now comparing',path2,'to',path1
+                print 'Now comparing',path2,'to',path
                 
                 for fpath in paths2:
                     if fpath not in paths1:
