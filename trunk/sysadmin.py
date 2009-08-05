@@ -442,7 +442,7 @@ Are you sure you wish to continue?:"""
                     paths2.append(fdata['path'])
                     hashes2[fdata['path']] = fdata['hash']
                 print '--- Begin fscompare ---'
-                print 'Now comparing',path,'to',path2
+                print '-- Now comparing:',path,'to',path2
                 
                 for fpath in paths1:
                     if fpath not in paths2:
@@ -452,7 +452,7 @@ Are you sure you wish to continue?:"""
                         print path,fpath,hashes1[fpath]
                         print path2,fpath,hashes2[fpath]
                         
-                print 'Now comparing',path2,'to',path
+                print '-- Now comparing:',path2,'to',path
                 
                 for fpath in paths2:
                     if fpath not in paths1:
@@ -562,7 +562,7 @@ def usage():
         Example: -c windowsreturn -d /path/to/file
         Notes: This will overwrite the original file, as such make sure you have a backup
         
-        fscompare (BETA) - This command will attempt to compare firles between two directories, checking if they exist and their file hashes
+        fscompare - This command will attempt to compare firles between two directories, checking if they exist and their file hashes
         Example: -c fscompare -d /path/to/folder1,/path/toi/folder2
                 
         
