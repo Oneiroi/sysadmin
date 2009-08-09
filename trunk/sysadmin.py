@@ -328,10 +328,15 @@ class sysadmin:
             lines = raw.split('\n')
             bytes = 0
             rcount = 0
+            ips = {}
+            
             for line in lines:
                 dat = line.split(' ')
                 #at this split the status code should be in dat[8] and the bytes transfered in dat[9]
-                
+                try:
+                    ips[dat[0]]+=1
+                except KeyError:
+                    ips[dat[0]] = 1
                 try:
                     rcode = re.split('\D+',dat[8])[0].replace(' ','')
                     if len(rcode) > 0:
@@ -361,7 +366,22 @@ class sysadmin:
             print 'Bytes:',bytes
             print 'Megabytes:',round((bytes/1024.00/1024.00),2)
             print 'Gigabytes:',round((bytes/1024.00/1024.00/1024.00),2)
-                
+            
+            print '--- IP stats ---'
+            print 'Unique IPs:',len(ips)
+            
+            items = ips.items()
+            items.sort(key=lambda (k,v): (v,k), reverse=True)
+            
+            str ='Would you like to output the count for each ip?:'
+            response = raw_input(str)
+            while response not in ('y','n'):
+                str = 'Invalid option, reply y or n:'
+                response = raw_input(str)
+            if response == 'y':
+                for item in items:
+                    print '%s: %s' % (item[0],item[1])
+                        
         else:
             self.error('404 file not found! %s ' % (opts[0]))  
             
@@ -446,21 +466,23 @@ Are you sure you wish to continue?:"""
                 
                 for fpath in paths1:
                     if fpath not in paths2:
-                        print 'Missing File:',fpath,'Does not exist in',path2
-                    elif (hashes1[fpath]['md5'] != hashes2[fpath]['md5']) or (hashes1[fpath]['crc32'] != hashes2[fpath]['crc32']):
-                        print 'File HASH fail:',fpath,'file hashes do not match'
-                        print path,fpath,hashes1[fpath]
-                        print path2,fpath,hashes2[fpath]
+                        #- print 'Missing File:',fpath,'Does not exist in',path2
+                        cmd = 'cp %s%s %s%s' % (path,fpath, path2,fpath)
+                        print cmd
+                    # elif (hashes1[fpath]['md5'] != hashes2[fpath]['md5']) or (hashes1[fpath]['crc32'] != hashes2[fpath]['crc32']):
+                        # print 'File HASH fail:',fpath,'file hashes do not match'
+                        #----------------------- print path,fpath,hashes1[fpath]
+                        #---------------------- print path2,fpath,hashes2[fpath]
                         
-                print '-- Now comparing:',path2,'to',path
-                
-                for fpath in paths2:
-                    if fpath not in paths1:
-                        print 'Missing File:',fpath,'Does not exist in',path
-                    elif (hashes2[fpath]['md5'] != hashes1[fpath]['md5']) or (hashes2[fpath]['crc32'] != hashes1[fpath]['crc32']):
-                        print 'File HASH fail:',fpath,'file hashes do not match'
-                        print path2,fpath,hashes2[fpath]
-                        print path,fpath,hashes1[fpath]
+                #--------------------- print '-- Now comparing:',path2,'to',path
+#------------------------------------------------------------------------------ 
+                #------------------------------------------ for fpath in paths2:
+                    #----------------------------------- if fpath not in paths1:
+                        #-- print 'Missing File:',fpath,'Does not exist in',path
+                    # elif (hashes2[fpath]['md5'] != hashes1[fpath]['md5']) or (hashes2[fpath]['crc32'] != hashes1[fpath]['crc32']):
+                        # print 'File HASH fail:',fpath,'file hashes do not match'
+                        #---------------------- print path2,fpath,hashes2[fpath]
+                        #----------------------- print path,fpath,hashes1[fpath]
                         
                 print '--- End fscompare ---'
                         
