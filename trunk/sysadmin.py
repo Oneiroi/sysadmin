@@ -373,14 +373,20 @@ class sysadmin:
             items = ips.items()
             items.sort(key=lambda (k,v): (v,k), reverse=True)
             
-            str ='Would you like to output the count for each ip?:'
-            response = raw_input(str)
-            while response not in ('y','n'):
-                str = 'Invalid option, reply y or n:'
-                response = raw_input(str)
-            if response == 'y':
-                for item in items:
-                    print '%s: %s' % (item[0],item[1])
+            count = 0
+            for item in items:
+                count += 1
+                print '%s: %s' % (item[0],item[1])
+                if count == 10:
+                    str ='Would you like to output the next 10?:'
+                    response = raw_input(str)
+                    while response not in ('y','n'):
+                        str = 'Invalid option, reply y or n:'
+                        response = raw_input(str)
+                    if response == 'y':
+                        count = 0
+                    elif response == 'n':
+                        sys.exit(0)
                         
         else:
             self.error('404 file not found! %s ' % (opts[0]))  
