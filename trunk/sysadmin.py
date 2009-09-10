@@ -70,7 +70,12 @@ class sysadmin:
             print 'Config file error: ',cfgPath
             print e
             sys.exit(0)
-            
+    
+    def progress(self,str):
+        str = " %s" % str
+        sys.stdout.write(str + '\r')
+        sys.stdout.flush()
+        
 #===============================================================================
 #    _get_filesize, attempts to get the filesize in bytes of the provided path
 #    @param path: string
@@ -191,30 +196,27 @@ class sysadmin:
 
                
         if (hasattr(opts, 'path') and opts.path != None) and (hasattr(opts, 'cs_from') and opts.cs_from != None) and (hasattr(opts, 'cs_to') and opts.cs_to != None):
-            sql = self._readfile(opts.path)
-            
-            if hasattr(opts, 'checksum') and opts.checksum == True:
-                src_checksum = self._checksum(sql)
-            try: 
-                tgt = unicode(sql,opts.cs_from).encode(opts.cs_to)
-            except UnicodeEncodeError, e:
-                self.error(e)
             
             try:
-                out_path = '%s.%s' % (opts.path,opts.cs_to)
-                f = file(out_path,'w+')
-                f.write(tgt)
-                f.close()
-            except IOError, e:
+                sF = file(opts.path, 'r')
+                tPath = '%s.%s' % (opts.path, opts.cs_to)
+                tF = file(tPath, 'w+')
+                sSize = self._get_filesize(opts.path)
+                offset = 0
+                increment = 1024
+                actual = 0
+                while offset < sSize:
+                    sData = sF.read(increment)
+                    offset += increment
+                    tData = unicode(sData,opts.cs_from).encode(opts.cs_to)
+                    actual += len(tData)
+                    tF.write(tData)
+                    self.progress('Wrote: %s bytes' % (actual))
+            except (IOError or UnicodeEncodeError), e:
                 self.error(e)
-            
-            if hasattr(opts, 'checksum') and opts.checksum == True:
-                tgt_checksum = self._checksum(tgt)
                 
-                print 'src checksum: ', src_checksum
-                print 'tgt checksum: ', tgt_checksum
-                print 'output file: ', out_path
-                                         
+            print 'Conversion complete: %s' % tPath
+                                                    
         else:
             print 'Path, source charset and dest charset are required'
             sys.exit(1)
@@ -298,7 +300,7 @@ class sysadmin:
                      #306 deprecated
                      307:{'desc':'Temporary redirect','count':0},
                      400:{'desc':'Bad request','count':0},
-                     401:{'desc':'PUnauthorised','count':0},
+                     401:{'desc':'Unauthorised','count':0},
                      402:{'desc':'Payment required','count':0},
                      403:{'desc':'Forbidden','count':0},
                      404:{'desc':'Not found','count':0},
