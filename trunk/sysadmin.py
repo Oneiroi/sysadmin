@@ -184,6 +184,16 @@ class sysadmin:
             return {'md5':'hashlib not loaded','crc32':crc32(data) & 0xffffffff}
     
     def _iconv(self,opts):
+        
+        
+        BOM={#src: http://code.activestate.com/recipes/363841/              
+                    (0x00, 0x00, 0xFE, 0xFF) : "utf-32-be",        
+                    (0xFF, 0xFE, 0x00, 0x00) : "utf-32-le",
+                    (0xFE, 0xFF, None, None) : "utf-16-be", 
+                    (0xFF, 0xFE, None, None) : "utf-16-le", 
+                    (0xEF, 0xBB, 0xBF, None) : "utf-8",
+                 }
+
         self.verbose('_iconv()')
         tmp = opts
         opts = iconv_opts()
@@ -196,7 +206,9 @@ class sysadmin:
 
                
         if (hasattr(opts, 'path') and opts.path != None) and (hasattr(opts, 'cs_from') and opts.cs_from != None) and (hasattr(opts, 'cs_to') and opts.cs_to != None):
-            
+            if opts.cs_from == opts.cs_to:
+                print 'Source and Destination encodings are the same, aborting ...'
+                sys.exit(1)
             try:
                 sF = file(opts.path, 'r')
                 tPath = '%s.%s' % (opts.path, opts.cs_to)
@@ -204,9 +216,37 @@ class sysadmin:
                 sSize = self._get_filesize(opts.path)
                 offset = 0
                 increment = 1024
+                runBOM=False
+                gotBOM=False
+                lenBOM=0
                 actual = 0
                 while offset < sSize:
                     sData = sF.read(increment)
+                    if runBOM == False:
+                        runBOM = True
+                        bytes = (byte1, byte2, byte3, byte4) = tuple(map(ord, sData[0:4]))
+                        lenBOM=4
+                        enc = BOM.get(bytes, None)
+                        if not enc:
+                            enc = BOM.get((byte1,byte2,byte3,None))
+                            lenBOM=3
+                            if not enc:
+                                enc = BOM.get((byte1,byte2,None,None))
+                                lenBOM=2
+                        if enc:
+                            gotBOM = True
+                            if opts.cs_from != enc:
+                                answer = raw_input('BOM FOUND: I detected %s please select the source encoding (%s/%s):' % (enc,opts.cs_from,enc))
+                                while answer not in (enc,opts.cs_from):
+                                    answer = raw_input('Invalid response (%s/%s):' % (opts.cs_from,enc))
+                                if answer == opts.cs_to:
+                                    print 'Source and Destination encodings are the same, aborting ...'
+                                    sys.exit(1)
+                                opts.cs_from = answer
+                    #string out the BOM
+                    if gotBOM == True:
+                        sData = sData[lenBOM:1024-lenBOM]
+                                                                           
                     offset += increment
                     tData = unicode(sData,opts.cs_from).encode(opts.cs_to)
                     actual += len(tData)
