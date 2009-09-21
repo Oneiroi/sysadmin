@@ -30,6 +30,7 @@ if version >= 2.5:
         print e
         sys.exit(1)
 else:
+    import md5
     print 'Your python version is < 2.5 (%s.%s)' % (version,info[2])
     print 'hashlib has not been loaded, md5 has been loaded'
 
