@@ -204,7 +204,7 @@ class sysadmin:
                     offset += 1024
             else:
                 m.update(data)
-            return {'md5':m.digest()}
+            return {'md5':m.hexdigest()}
         
 #===============================================================================
 # This function provides iconv like functionality, and currently has a small amount of BOM detection
