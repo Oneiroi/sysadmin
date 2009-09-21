@@ -31,7 +31,7 @@ if version >= 2.5:
         sys.exit(1)
 else:
     print 'Your python version is < 2.5 (%s.%s)' % (version,info[2])
-    print 'hashlib has not been loaded, checksum functionality will not be enabled'
+    print 'hashlib has not been loaded, md5 has been loaded'
 
 
 #===============================================================================
@@ -175,16 +175,35 @@ class sysadmin:
         return data
 
 #===============================================================================
-# This function generates CRC32 and MD5 checksums    
+# This function generates MD5 checksums    
 #===============================================================================
     def _checksum(self,data):
         self.verbose('_checksum()')
         if version >= 2.5:
             m = hashlib.md5()
-            m.update(data)
-            return {'md5':m.hexdigest(),'crc32':crc32(data) & 0xffffffff}
+            if os.path.isfile(data):
+                f = file(data,'r')
+                s = self._get_filesize(data)
+                offset = 0
+                while offset < s:
+                    m.update(f.read(1024))
+                    offset += 1024
+            else:
+                m.update(data)
+                    
+            return {'md5':m.hexdigest()}
         else:
-            return {'md5':None,'crc32':crc32(data) & 0xffffffff}
+            m = md5.new()
+            if os.path.isfile(data):
+                f = file(data,'r')
+                s = self._get_filesize(data)
+                offset = 0
+                while offset < s:
+                    m.update(f.read(1024))
+                    offset += 1024
+            else:
+                m.update(data)
+            return {'md5':m.digest()}
         
 #===============================================================================
 # This function provides iconv like functionality, and currently has a small amount of BOM detection
@@ -483,15 +502,43 @@ class sysadmin:
 
         return str.rstrip('\n')
     
-    def _walkhash(self,path):
+    def manifest(self,path):
         from os.path import join, getsize
-        data = []
-        for root, dirs, files in os.walk(path):
-            for fname in files:
-                fpath = join(root,fname)
-                fpath = string.replace(fpath,path,'')
-                data.append({'path':fpath,'hash':self._checksum(fpath)})
-        return data
+        cfiles = 0
+        mname = '%s.manifest' % time.strftime('%d-%B-%Y',time.gmtime())
+        of = file(mname, 'w+')
+        
+        if os.path.isdir(path):
+            self.progress(' Please wait, counting files ...')
+            for root, dirs, files in os.walk(path):
+                #get count first loop
+                for fname in files:
+                    cfiles += 1
+            print
+            
+            q = 'There are currently %s files in %s, do you want to proceed with the manifest?:' % (cfiles,path)
+            a = raw_input(q)
+            while a not in ('y','n'):
+                q = 'Invalid response (y/n):'
+                a = raw_input(q)
+            if a == 'n':
+                sys.exit(0)
+            else:
+                print
+                tfiles = cfiles
+                cfiles = 0
+                for root, dirs, files in os.walk(path):  
+                    for fname in files:
+                        fpath = join(root,fname)
+                        hash = self._checksum(fpath)['md5']
+                        of.write("%s %s\n" % (hash, fpath))
+                        cfiles += 1
+                        fper = round(((1.00*cfiles)/(1.00*tfiles))*100.00,2)
+                        self.progress(' Added %s/%s Files to manifest (%s%%)' % (cfiles,tfiles,fper))
+            print
+                        
+        elif os.path.isfile(path):
+            print 'Verify manifest coming soon'        
     
     def filesystem_compare(self,opts):
         
@@ -657,6 +704,10 @@ def usage():
         
         fscompare - This command will attempt to compare files between two directories, checking if they exist and their file hashes
         Example: -c fscompare -d /path/to/folder1,/path/toi/folder2
+        
+        manifest (BETA) - This command will attempt to iterate the given path and generate an md5 manifest file for all files in that path and it's subdirectories
+        Example: -c manifest -d /path/to/folder
+        Notes: This will write out a dd-Mon-YYYY.manifest file in your CWD (current working directory) so make sure you are not in the path you are indexing!
                 
         
     """ % (sys.argv[0])
@@ -699,6 +750,8 @@ def main():
             sa.windowsreturn(opts[0])
         elif options.command == 'fscompare':
             sa.filesystem_compare(opts)
+        elif options.command == 'manifest':
+            sa.manifest(opts[0])
         else:
             print 'Command not found "%s"' % (options.command)
        
