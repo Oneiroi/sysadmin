@@ -173,7 +173,10 @@ class sysadmin:
         except IOError, e:
             self.error(e)
         return data
-    
+
+#===============================================================================
+# This function generates CRC32 and MD5 checksums    
+#===============================================================================
     def _checksum(self,data):
         self.verbose('_checksum()')
         if version >= 2.5:
@@ -181,8 +184,11 @@ class sysadmin:
             m.update(data)
             return {'md5':m.hexdigest(),'crc32':crc32(data) & 0xffffffff}
         else:
-            return {'md5':'hashlib not loaded','crc32':crc32(data) & 0xffffffff}
-    
+            return {'md5':None,'crc32':crc32(data) & 0xffffffff}
+        
+#===============================================================================
+# This function provides iconv like functionality, and currently has a small amount of BOM detection
+#===============================================================================
     def _iconv(self,opts):
         
         
@@ -260,7 +266,10 @@ class sysadmin:
         else:
             print 'Path, source charset and dest charset are required'
             sys.exit(1)
-        
+ 
+#===============================================================================
+# This function parses the output of ps aux to generate information on the memory allocations to a given process name       
+#===============================================================================
     def appmem(self,filter):
         self.verbose('appmem(%s)' % (filter))
         cmd = 'ps aux | grep "%s" | grep -v "grep" | grep -v "%s"' % (filter,sys.argv[0])
@@ -291,6 +300,9 @@ class sysadmin:
         print 'Total Resident Set Size: %sMB' % (round((rss/1024),2))
         print 'MEM/PID: %sMB' % (round((rss/count)/1024,2)) 
         
+#===============================================================================
+# This function attempts to lookup against the configured RBL servers in an attempt to identify an RBL listing for the given ip address      
+#===============================================================================
     def rblcheck(self,opts):
         try:
             ip = opts[0]
@@ -318,7 +330,10 @@ class sysadmin:
                 print 'Returned: %s'  % (addr)
             else:
                 print 'IP(%s) is not listed at RBL(%s)' % (ip,rbl)
-    
+ 
+#===============================================================================
+# This function gives rough stats from a 'combined' apache logfile
+#===============================================================================
     def httpd_stats(self,opts):
         #this was not fun to type!
         codes = {
@@ -366,13 +381,17 @@ class sysadmin:
                  }
         
         if os.path.isfile(opts[0]):
-            raw = self._readfile(opts[0])
-            lines = raw.split('\n')
+            self.progress(' Please wait getting file stats...')
+            ltotal = 0;
+            for line in open(opts[0],'r'):
+                ltotal +=1
+            print
+            lcount = 0;
             bytes = 0
             rcount = 0
             ips = {}
-            
-            for line in lines:
+          
+            for line in open(opts[0],'r'):
                 dat = line.split(' ')
                 #at this split the status code should be in dat[8] and the bytes transfered in dat[9]
                 try:
@@ -397,7 +416,11 @@ class sysadmin:
                     rcount += 1
                 except IndexError, e:
                     print dat,e
+                lcount += 1
+                lper = round(((1.00*lcount)/(1.00*ltotal))*100.00,2)
+                self.progress(' Parsed %s/%s lines (%s%%)' % (lcount,ltotal,lper))
             
+            print
             print '--- HTTP Code stats ---'    
             for code in codes:
                 if codes[code]['count'] > 0:
