@@ -510,7 +510,7 @@ class sysadmin:
         of = file(mname, 'w+')
         
         if os.path.isdir(path):
-            self.progress(' Please wait, counting files ...')
+            self.progress(' Please wait, getting initial file count (%s) ...' % (cfiles))
             for root, dirs, files in os.walk(path):
                 #get count first loop
                 for fname in files:
