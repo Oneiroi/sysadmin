@@ -532,7 +532,7 @@ class sysadmin:
                     for fname in files:
                         fpath = join(root,fname)
                         hash = self._checksum(fpath)['md5']
-                        of.write("%s %s\n" % (hash, fpath))
+                        of.write("%s  %s\n" % (hash, fpath))
                         cfiles += 1
                         fper = round(((1.00*cfiles)/(1.00*tfiles))*100.00,2)
                         self.progress(' Added %s/%s Files to manifest (%s%%)' % (cfiles,tfiles,fper))
