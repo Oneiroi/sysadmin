@@ -74,9 +74,9 @@ class sysadmin:
     
     def progress(self,str):
         str = " %s" % str
-        clen = len(str)
-        while clen < opts.slen:
-            str = '%s ' % str
+        
+        while len(str) < opts.slen:
+            str = '%s ' % str    
         opts.slen = len(str)
         sys.stdout.write(str + '\r')
         sys.stdout.flush()
@@ -565,6 +565,7 @@ class sysadmin:
                         fper = round(((1.00*cfiles)/(1.00*tfiles))*100.00,2)
                         self.progress('Added %s/%s Files to manifest (%s%%) (%s/s)' % (cfiles,tfiles,fper,filessec))
             print
+            opts.slen = 0
                         
         elif os.path.isfile(path):
             
@@ -575,6 +576,7 @@ class sysadmin:
                 self.progress('Please wait getting manifest count (%s)' % (mcount))
             print
             print 'Manifest count complete'
+            
             if mcount == 0:
                 self.error('Counted 0 lines in manifest ... aborting')
             
@@ -592,8 +594,7 @@ class sysadmin:
                 elif not os.path.isfile(mpath):
                     self.error('Manifest Verification error line %s path is invalid (file may be missing)' % vcount,False)
             print
-            print 'Manifest verification complete'
-            
+            print 'Manifest verification complete'            
                         
             vcount = 0
             fcount = 0
