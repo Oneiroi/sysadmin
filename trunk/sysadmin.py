@@ -503,13 +503,28 @@ class sysadmin:
 
         return str.rstrip('\n')
     
+    def progressbar(self,cper,clen):
+        
+        str = '['
+        it = 100/clen
+        offset = 0
+        while offset < 100:
+            if offset >= cper:
+                str = '%s ' % str
+            else:
+                str = '%s=' % str
+            offset += it
+            
+        str = '%s]' % str
+        return str
+    
     def manifest(self,path):
         from os.path import join, getsize
         cfiles = 0
-        mname = '%s.manifest' % time.strftime('%d-%B-%Y',time.gmtime())
-        of = file(mname, 'w+')
-        
+                
         if os.path.isdir(path):
+            mname = '%s.manifest' % time.strftime('%d-%B-%Y',time.gmtime())
+            of = file(mname, 'w+')
             for root, dirs, files in os.walk(path):
                 self.progress(' Please wait, getting initial file count (%s) ...' % (cfiles))
                 #get count first loop
@@ -539,7 +554,64 @@ class sysadmin:
             print
                         
         elif os.path.isfile(path):
-            print 'Verify manifest coming soon'        
+            
+            mcount = 0
+            #get manifest linecount
+            for line in open(path,'r'):
+                mcount += 1
+                self.progress(' Please wait getting manifest count (%s)' % (mcount))
+            print 'Manifest count complete'
+            if mcount == 0:
+                self.error('Counted 0 lines in manifest ... aborting')
+            
+            vcount = 0
+            #verify manifest
+            for line in open(path,'r'):
+                vcount += 1
+                vper = round(((1.00*vcount)/(1.00*mcount))*100.00,2)
+                self.progress(' Please wait verifying manifest (%s%%)' % (vper))
+                dat = re.split('  ',line)
+                dat[1] = dat[1].replace("\n",'')
+                if len(dat[0]) != 32:
+                    self.error('Manifest Verification error line %s md5 is invalid' % vcount,False)
+                elif not os.path.isfile(dat[1]):
+                    self.error('Manifest Verification error line %s path is invalid' % vcount,False)
+                    print dat
+            print 'Manifest verification complete'
+            
+                        
+            vcount = 0
+            fcount = 0
+            pcount = 0
+            failed = []
+            for line in open(path,'r'):
+                dat = re.split('  ',line)
+                dat[1] = dat[1].replace("\n",'')
+                if self._checksum(dat[1])['md5'] == dat[0]:
+                    pcount += 1
+                else:
+                    fcount += 1
+                    failed.append(dat[1])
+                vcount += 1
+                vper = round(((1.00*vcount)/(1.00*mcount))*100.00,2)
+                fper = round(((1.00*fcount)/(1.00*mcount))*100.00,2)
+                pper = round(((1.00*pcount)/(1.00*mcount))*100.00,2)
+                bar = self.progressbar(vper, 50)
+                                
+                #[==================================================] Pass (00%) Fail(00%)
+                self.progress('Verification in progress: %s (%s%%) Pass(%s%%) Fail(%s%%)' % (bar,vper,pper,fper))
+            print
+            if fcount > 0:
+                print '--- START FAILED LIST ---'
+                for f in failed:
+                    print f
+                print '--- END FAIL LIST ---'
+            
+            
+            
+                
+            
+                    
     
     def filesystem_compare(self,opts):
         
@@ -706,9 +778,10 @@ def usage():
         fscompare - This command will attempt to compare files between two directories, checking if they exist and their file hashes
         Example: -c fscompare -d /path/to/folder1,/path/toi/folder2
         
-        manifest (BETA) - This command will attempt to iterate the given path and generate an md5 manifest file for all files in that path and it's subdirectories
+        manifest (BETA) - This command will attempt to iterate the given path and generate an md5 manifest file for all files in that path and it's subdirectories, or verify an existing manifest
         Example: -c manifest -d /path/to/folder
-        Notes: This will write out a dd-Mon-YYYY.manifest file in your CWD (current working directory) so make sure you are not in the path you are indexing!
+        Example: -c manifest -d /path/to/existing.manifest
+        Notes: If bulding a new manifest this will write out a dd-Mon-YYYY.manifest file in your CWD (current working directory) so make sure you are not in the path you are indexing!
                 
         
     """ % (sys.argv[0])
