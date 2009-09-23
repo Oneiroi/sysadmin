@@ -73,12 +73,7 @@ class sysadmin:
             sys.exit(0)
     
     def progress(self,str):
-        c = len(str)
-        f = ''
-        while c < opts.slen:
-         f = '%s ' % f
-         c +=1
-        str = " %s%s" % (str,f)
+        str = " %s" % str
         opts.slen = len (str)
         sys.stdout.write(str + '\r')
         sys.stdout.flush()
