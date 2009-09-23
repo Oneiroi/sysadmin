@@ -543,14 +543,23 @@ class sysadmin:
                 print
                 tfiles = cfiles
                 cfiles = 0
+                ltime = 0
+                lfiles = 0
+                filessec = 0
                 for root, dirs, files in os.walk(path):  
                     for fname in files:
+                        ctime = time.time()
+                        if (ctime - ltime) >= 1:
+                            if ltime > 0:
+                                filessec = (cfiles - lfiles) / (ctime - ltime)    
+                            ltime = ctime
+                            lfiles = cfiles
                         fpath = join(root,fname)
                         hash = self._checksum(fpath)['md5']
                         of.write("%s  %s\n" % (hash, fpath))
                         cfiles += 1
                         fper = round(((1.00*cfiles)/(1.00*tfiles))*100.00,2)
-                        self.progress(' Added %s/%s Files to manifest (%s%%)' % (cfiles,tfiles,fper))
+                        self.progress(' Added %s/%s Files to manifest (%s%%) (%s/s)' % (cfiles,tfiles,fper,filessec))
             print
                         
         elif os.path.isfile(path):
@@ -583,7 +592,16 @@ class sysadmin:
             fcount = 0
             pcount = 0
             failed = []
+            filessec = 0
+            lfiles = 0
+            ltime = 0
             for line in open(path,'r'):
+                ctime = time.time()
+                if (ctime - ltime) >= 1:
+                    if ltime > 0:
+                        filessec = (vcount - lfiles) / (ctime - ltime)    
+                    ltime = ctime
+                    lfiles = vcount
                 dat = re.split('  ',line)
                 dat[1] = dat[1].replace("\n",'')
                 if self._checksum(dat[1])['md5'] == dat[0]:
@@ -598,7 +616,7 @@ class sysadmin:
                 bar = self.progressbar(vper, 50)
                                 
                 #[==================================================] Pass (00%) Fail(00%)
-                self.progress('Verification in progress: %s (%s%%) Pass(%s%%) Fail(%s%%)' % (bar,vper,pper,fper))
+                self.progress('Verification in progress: %s - %s%% Pass(%s%%) Fail(%s%%) %s/s' % (bar,vper,pper,fper,filessec))
             print
             if fcount > 0:
                 print '--- START FAILED LIST ---'
