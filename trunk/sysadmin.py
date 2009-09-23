@@ -569,6 +569,7 @@ class sysadmin:
             for line in open(path,'r'):
                 mcount += 1
                 self.progress(' Please wait getting manifest count (%s)' % (mcount))
+            print
             print 'Manifest count complete'
             if mcount == 0:
                 self.error('Counted 0 lines in manifest ... aborting')
@@ -585,6 +586,7 @@ class sysadmin:
                     self.error('Manifest Verification error line %s md5 is invalid' % vcount,False)
                 elif not os.path.isfile(dat[1]):
                     self.error('Manifest Verification error line %s path is invalid (file may be missing)' % vcount,False)
+            print
             print 'Manifest verification complete'
             
                         
