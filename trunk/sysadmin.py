@@ -575,8 +575,7 @@ class sysadmin:
                 if len(dat[0]) != 32:
                     self.error('Manifest Verification error line %s md5 is invalid' % vcount,False)
                 elif not os.path.isfile(dat[1]):
-                    self.error('Manifest Verification error line %s path is invalid' % vcount,False)
-                    print dat
+                    self.error('Manifest Verification error line %s path is invalid (file may be missing)' % vcount,False)
             print 'Manifest verification complete'
             
                         
