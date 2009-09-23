@@ -588,11 +588,12 @@ class sysadmin:
                 vcount += 1
                 vper = round(((1.00*vcount)/(1.00*mcount))*100.00,2)
                 self.progress('Please wait verifying manifest (%s%%)' % (vper))
-                dat = re.split('  ',line)
-                dat[1] = dat[1].replace("\n",'')
-                if len(dat[0]) != 32:
+                md5 = line[:32]
+                mpath = line[34:]
+                mpath = mpath.replace("\n",'')
+                if len(md5) != 32:
                     self.error('Manifest Verification error line %s md5 is invalid' % vcount,False)
-                elif not os.path.isfile(dat[1]):
+                elif not os.path.isfile(mpath):
                     self.error('Manifest Verification error line %s path is invalid (file may be missing)' % vcount,False)
             print
             print 'Manifest verification complete'
@@ -613,13 +614,14 @@ class sysadmin:
                         filessec = round((vcount - lfiles) / (ctime - ltime),2)
                     ltime = ctime
                     lfiles = vcount
-                dat = re.split('  ',line)
-                dat[1] = dat[1].replace("\n",'')
-                if self._checksum(dat[1])['md5'] == dat[0]:
+                md5 = line[:32]
+                mpath = line[34:]
+                mpath = mpath.replace("\n",'')
+                if self._checksum(mpath)['md5'] == md5:
                     pcount += 1
                 else:
                     fcount += 1
-                    failed.append(dat[1])
+                    failed.append(mpath)
                 vcount += 1
                 vper = round(((1.00*vcount)/(1.00*mcount))*100.00,2)
                 fper = round(((1.00*fcount)/(1.00*mcount))*100.00,2)
