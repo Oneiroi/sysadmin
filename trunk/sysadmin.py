@@ -73,7 +73,15 @@ class sysadmin:
             sys.exit(0)
     
     def progress(self,str):
+        c = 0
+        f = ''
+        while c < opts.slen:
+         f = '%s ' % f
+         c +=1
+        sys.stdout.write(f + '\r')
+        sys.stdout.flush()
         str = " %s" % str
+        opts.slen = len (str)
         sys.stdout.write(str + '\r')
         sys.stdout.flush()
         
@@ -526,7 +534,7 @@ class sysadmin:
             mname = '%s.manifest' % time.strftime('%d-%B-%Y',time.gmtime())
             of = file(mname, 'w+')
             for root, dirs, files in os.walk(path):
-                self.progress(' Please wait, getting initial file count (%s) ...' % (cfiles))
+                self.progress('Please wait, getting initial file count (%s) ...' % (cfiles))
                 #get count first loop
                 for fname in files:
                     cfiles += 1
@@ -551,7 +559,7 @@ class sysadmin:
                         ctime = time.time()
                         if (ctime - ltime) >= 1:
                             if ltime > 0:
-                                filessec = (cfiles - lfiles) / (ctime - ltime)    
+                                filessec = round((cfiles - lfiles) / (ctime - ltime),2)
                             ltime = ctime
                             lfiles = cfiles
                         fpath = join(root,fname)
@@ -559,7 +567,7 @@ class sysadmin:
                         of.write("%s  %s\n" % (hash, fpath))
                         cfiles += 1
                         fper = round(((1.00*cfiles)/(1.00*tfiles))*100.00,2)
-                        self.progress(' Added %s/%s Files to manifest (%s%%) (%s/s)' % (cfiles,tfiles,fper,filessec))
+                        self.progress('Added %s/%s Files to manifest (%s%%) (%s/s)' % (cfiles,tfiles,fper,filessec))
             print
                         
         elif os.path.isfile(path):
@@ -568,7 +576,7 @@ class sysadmin:
             #get manifest linecount
             for line in open(path,'r'):
                 mcount += 1
-                self.progress(' Please wait getting manifest count (%s)' % (mcount))
+                self.progress('Please wait getting manifest count (%s)' % (mcount))
             print
             print 'Manifest count complete'
             if mcount == 0:
@@ -579,7 +587,7 @@ class sysadmin:
             for line in open(path,'r'):
                 vcount += 1
                 vper = round(((1.00*vcount)/(1.00*mcount))*100.00,2)
-                self.progress(' Please wait verifying manifest (%s%%)' % (vper))
+                self.progress('Please wait verifying manifest (%s%%)' % (vper))
                 dat = re.split('  ',line)
                 dat[1] = dat[1].replace("\n",'')
                 if len(dat[0]) != 32:
@@ -597,11 +605,12 @@ class sysadmin:
             filessec = 0
             lfiles = 0
             ltime = 0
+            lstr = 0
             for line in open(path,'r'):
                 ctime = time.time()
                 if (ctime - ltime) >= 1:
                     if ltime > 0:
-                        filessec = (vcount - lfiles) / (ctime - ltime)    
+                        filessec = round((vcount - lfiles) / (ctime - ltime),2)
                     ltime = ctime
                     lfiles = vcount
                 dat = re.split('  ',line)
@@ -618,7 +627,9 @@ class sysadmin:
                 bar = self.progressbar(vper, 50)
                                 
                 #[==================================================] Pass (00%) Fail(00%)
-                self.progress('Verification in progress: %s - %s%% Pass(%s%%) Fail(%s%%) %s/s' % (bar,vper,pper,fper,filessec))
+                
+                str = 'Verification in progress: %s - %s%% Pass(%s%%) Fail(%s%%) %s/s' % (bar,vper,pper,fper,filessec)
+                self.progress(str)
             print
             if fcount > 0:
                 print '--- START FAILED LIST ---'
@@ -758,6 +769,9 @@ class iconv_opts:
     cs_from = None
     cs_to = None
     checksum = True
+
+class opts:
+    slen = 0
     
 def usage():
   
