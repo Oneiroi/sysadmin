@@ -425,7 +425,7 @@ class sysadmin:
                 #at this split the status code should be in dat[8] and the bytes transfered in dat[9]
                 try:
                     ips[dat[1]]+=1
-                except KeyError:
+                except KeyError,IndexError:
                     ips[dat[1]] = 1
                 try:
                     if len(dat[2]) > 0:
