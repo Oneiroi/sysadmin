@@ -433,7 +433,7 @@ class sysadmin:
                     else:
                         rcode = 0
                     
-                    if len(date[3]) > 0:
+                    if len(dat[3]) > 0:
                         bytes += self._toint(date[3])
                     else:
                         bytes += 0
