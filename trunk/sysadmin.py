@@ -416,21 +416,25 @@ class sysadmin:
             ips = {}
           
             for line in open(opts[0],'r'):
-                dat = line.split(' ')
+                #dat = line.split(' ')
+                dat = re.split('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s-\s-\s[^\]]+\]\s"[^"]+"\s([0-9]+)\s([0-9]+)', line)
+                #-------------------------------------------------------- 1 = ip
+                #-------------------------------------------------------- 2 = HTTP code
+                #-------------------------------------------------------- 3 = Bytes
+                
                 #at this split the status code should be in dat[8] and the bytes transfered in dat[9]
                 try:
-                    ips[dat[0]]+=1
+                    ips[dat[1]]+=1
                 except KeyError:
-                    ips[dat[0]] = 1
+                    ips[dat[1]] = 1
                 try:
-                    rcode = re.split('\D+',dat[8])[0].replace(' ','')
-                    if len(rcode) > 0:
-                        rcode = self._toint(rcode)
+                    if len(dat[2]) > 0:
+                        rcode = self._toint(dat[2])
                     else:
                         rcode = 0
-                    tmp = re.split('\D+',dat[9])[0].replace(' ','')
-                    if len(tmp) > 0:
-                        bytes += self._toint(tmp)
+                    
+                    if len(date[3]) > 0:
+                        bytes += self._toint(date[3])
                     else:
                         bytes += 0
                     try:
