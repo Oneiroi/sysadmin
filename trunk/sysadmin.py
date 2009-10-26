@@ -790,15 +790,11 @@ def crashdump():
     for line in excTb:
         str = '%s%s' % (str,line)
     dump = """
- --- Error Dump ---
-    
  Error: %s
  Args: %s
  Trace:
     
  %s
-    
- --- End Error Dump ---
     """ % (excName,excArgs,str)
     import base64
     
