@@ -7,7 +7,7 @@
     @License: http://creativecommons.org/licenses/by-sa/2.0/uk/ CC BY-SA
 """
 try:
-    import ConfigParser,os,sys,re,time,string,socket,threading,thread
+    import ConfigParser,os,sys,re,time,string,socket,threading,thread,traceback
     from zlib import crc32
     from optparse import OptionParser,OptionGroup, OptParseError
 except ImportError, e:
@@ -324,25 +324,68 @@ class sysadmin:
         
         count = 0
         regex = '[a-z\s]+[0-9]+\s+([0-9\.]+)\s+([0-9\.]+)\s+([0-9]+)\s+([0-9]+)'
-        for line in data:
-            tmp = re.split(regex, line)
-            # 1 - % CPU
-            # 2 - % MEM
-            # 3 - VSZ
-            # 4 - RSS
-            vsz += int(tmp[3])
-            rss += int(tmp[4])
-            cpuper += float(tmp[1])
-            memper += float(tmp[2])
-            count += 1
+        try:
+            for line in data:
+                tmp = re.split(regex, line)
+                # 1 - % CPU
+                # 2 - % MEM
+                # 3 - VSZ
+                # 4 - RSS
+                vsz += int(tmp[3])
+                rss += int(tmp[4])
+                cpuper += float(tmp[1])
+                memper += float(tmp[2])
+                count += 1
+                
+            print '--- Memory Usage Report For %s ---' % (filter)
+            print 'PID Count: %s' % (count)
+            print 'Shared Memory Usage: %sMB' % (round((vsz/count)/1024,2))
+            print 'Total Resident Set Size: %sMB' % (round((rss/1024),2))
+            print 'MEM/PID: %sMB' % (round((rss/count)/1024,2))
+            print '%%CPU: %s' % cpuper
+            print '%%MEM: %s' % memper
+        
+        except IndexError, e:
+            q = 'I could not find any relevant data, are you sure the process is running? (y/n):'
+            a = raw_input(q)
             
-        print '--- Memory Usage Report For %s ---' % (filter)
-        print 'PID Count: %s' % (count)
-        print 'Shared Memory Usage: %sMB' % (round((vsz/count)/1024,2))
-        print 'Total Resident Set Size: %sMB' % (round((rss/1024),2))
-        print 'MEM/PID: %sMB' % (round((rss/count)/1024,2))
-        print '%%CPU: %s' % cpuper
-        print '%%MEM: %s' % memper
+            while a not in ('y','n'):
+                a = raw_input('Invalid response please enter y or n:')
+            
+            if a == 'y':
+                print 'You have indicated that the process is running, however I could not process the information, please forward the below to d.busby@saiweb.co.uk'
+                print '--- BEGIN DUMP ---'
+                cla, exc, trbk = sys.exc_info()
+                excName = cla.__name__
+                try:
+                    excArgs = exc.__dict__["args"]
+                except KeyError:
+                    excArgs = "<no args>"
+                excTb = traceback.format_tb(trbk, 5)
+                
+                str = ''
+                for line in excTb:
+                    str = '%s%s' % (str,line)
+                dump = """
+             --- Error Dump ---
+                
+             Error: %s
+             Args: %s
+             Trace:
+                
+             %s
+             
+             DATA: 
+             
+             %s
+                
+             --- End Error Dump ---
+                """ % (excName,excArgs,str,data)
+                import base64
+                
+                dump = base64.b64encode(dump)               
+                print dump
+                print '--- END DUMP ---'
         
         
 #===============================================================================
