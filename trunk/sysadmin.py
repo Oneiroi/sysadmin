@@ -324,70 +324,25 @@ class sysadmin:
         
         count = 0
         regex = '[a-z\s]+[0-9]+\s+([0-9\.]+)\s+([0-9\.]+)\s+([0-9]+)\s+([0-9]+)'
-        try:
-            for line in data:
-                tmp = re.split(regex, line)
-                # 1 - % CPU
-                # 2 - % MEM
-                # 3 - VSZ
-                # 4 - RSS
-                vsz += int(tmp[3])
-                rss += int(tmp[4])
-                cpuper += float(tmp[1])
-                memper += float(tmp[2])
-                count += 1
-                
-            print '--- Memory Usage Report For %s ---' % (filter)
-            print 'PID Count: %s' % (count)
-            print 'Shared Memory Usage: %sMB' % (round((vsz/count)/1024,2))
-            print 'Total Resident Set Size: %sMB' % (round((rss/1024),2))
-            print 'MEM/PID: %sMB' % (round((rss/count)/1024,2))
-            print '%%CPU: %s' % cpuper
-            print '%%MEM: %s' % memper
-        
-        except IndexError, e:
-            q = 'I could not find any relevant data, are you sure the process is running? (y/n):'
-            a = raw_input(q)
+        for line in data:
+            tmp = re.split(regex, line)
+            # 1 - % CPU
+            # 2 - % MEM
+            # 3 - VSZ
+            # 4 - RSS
+            vsz += int(tmp[3])
+            rss += int(tmp[4])
+            cpuper += float(tmp[1])
+            memper += float(tmp[2])
+            count += 1
             
-            while a not in ('y','n'):
-                a = raw_input('Invalid response please enter y or n:')
-            
-            if a == 'y':
-                print 'You have indicated that the process is running, however I could not process the information, please forward the below to d.busby@saiweb.co.uk'
-                print '--- BEGIN DUMP ---'
-                cla, exc, trbk = sys.exc_info()
-                excName = cla.__name__
-                try:
-                    excArgs = exc.__dict__["args"]
-                except KeyError:
-                    excArgs = "<no args>"
-                excTb = traceback.format_tb(trbk, 5)
-                
-                str = ''
-                for line in excTb:
-                    str = '%s%s' % (str,line)
-                dump = """
-             --- Error Dump ---
-                
-             Error: %s
-             Args: %s
-             Trace:
-                
-             %s
-             
-             DATA: 
-             
-             %s
-                
-             --- End Error Dump ---
-                """ % (excName,excArgs,str,data)
-                import base64
-                
-                dump = base64.b64encode(dump)               
-                print dump
-                print '--- END DUMP ---'
-        
-        
+        print '--- Memory Usage Report For %s ---' % (filter)
+        print 'PID Count: %s' % (count)
+        print 'Shared Memory Usage: %sMB' % (round((vsz/count)/1024,2))
+        print 'Total Resident Set Size: %sMB' % (round((rss/1024),2))
+        print 'MEM/PID: %sMB' % (round((rss/count)/1024,2))
+        print '%%CPU: %s' % cpuper
+        print '%%MEM: %s' % memper
 #===============================================================================
 # This function attempts to lookup against the configured RBL servers in an attempt to identify an RBL listing for the given ip address      
 #===============================================================================
@@ -819,44 +774,79 @@ def usage():
     
     return help
 
+def crashdump():
+    print 'Opps! something went wrong, please forward the below to d.busby@saiweb.co.uk'
+    
+    print '--- BEGIN DUMP ---'
+    cla, exc, trbk = sys.exc_info()
+    excName = cla.__name__
+    try:
+        excArgs = exc.__dict__["args"]
+    except KeyError:
+        excArgs = "<no args>"
+    excTb = traceback.format_tb(trbk, 5)
+    
+    str = ''
+    for line in excTb:
+        str = '%s%s' % (str,line)
+    dump = """
+ --- Error Dump ---
+    
+ Error: %s
+ Args: %s
+ Trace:
+    
+ %s
+    
+ --- End Error Dump ---
+    """ % (excName,excArgs,str)
+    import base64
+    
+    dump = base64.b64encode(dump)               
+    print dump
+    print '--- END DUMP ---'
+
 def main():
-    sa = sysadmin()
-    sa.verbose('main()')         
-    parser = OptionParser(usage=usage(), version="%prog 1.0")
-    parser.add_option('-c','--command', dest='command', help='Command to run')
-    parser.add_option('-d','--data', dest='data', help='CSV Style data')
-    
-    (options,args) = parser.parse_args()
-    
-    sa.verbose('args parsed')
-    
-    if options.command == None:
-        parser.error('Command is a required input')
-    elif options.data == None:
-        parser.error('Data is a required input')
-    else:
-        sa.verbose('Command: %s' % (options.command))
-        opts = options.data.split(',')
+    try:
+        sa = sysadmin()
+        sa.verbose('main()')         
+        parser = OptionParser(usage=usage(), version="%prog 1.0")
+        parser.add_option('-c','--command', dest='command', help='Command to run')
+        parser.add_option('-d','--data', dest='data', help='CSV Style data')
         
-        #todo: replace this, couldn't get switch statements working properly!
-        if options.command == 'iconv':
-            sa._iconv(opts)
-        elif options.command == 'appmem':
-            sa.appmem(opts[0])
-        elif options.command == 'checksum':
-            sa.checksum(opts[0])
-        elif options.command == 'rblcheck':
-            sa.rblcheck(opts)
-        elif options.command == 'httpd_stats':
-            sa.httpd_stats(opts)
-        elif options.command == 'windowsreturn':
-            sa.windowsreturn(opts[0])
-        elif options.command == 'fscompare':
-            sa.filesystem_compare(opts)
-        elif options.command == 'manifest':
-            sa.manifest(opts[0])
+        (options,args) = parser.parse_args()
+        
+        sa.verbose('args parsed')
+        
+        if options.command == None:
+            parser.error('Command is a required input')
+        elif options.data == None:
+            parser.error('Data is a required input')
         else:
-            print 'Command not found "%s"' % (options.command)
+            sa.verbose('Command: %s' % (options.command))
+            opts = options.data.split(',')
+            
+            #todo: replace this, couldn't get switch statements working properly!
+            if options.command == 'iconv':
+                sa._iconv(opts)
+            elif options.command == 'appmem':
+                sa.appmem(opts[0])
+            elif options.command == 'checksum':
+                sa.checksum(opts[0])
+            elif options.command == 'rblcheck':
+                sa.rblcheck(opts)
+            elif options.command == 'httpd_stats':
+                sa.httpd_stats(opts)
+            elif options.command == 'windowsreturn':
+                sa.windowsreturn(opts[0])
+            elif options.command == 'fscompare':
+                sa.filesystem_compare(opts)
+            elif options.command == 'manifest':
+                sa.manifest(opts[0])
+            else:
+                print 'Command not found "%s"' % (options.command)
+    except:
+        crashdump()
        
     
                 
