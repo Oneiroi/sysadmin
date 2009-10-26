@@ -296,33 +296,54 @@ class sysadmin:
 #===============================================================================
     def appmem(self,filter):
         self.verbose('appmem(%s)' % (filter))
-        cmd = 'ps aux | grep "%s" | grep -v "grep" | grep -v "%s"' % (filter,sys.argv[0])
+        cmd = 'ps aux | grep -i "%s" | grep -v "grep" | grep -v "%s"' % (filter,sys.argv[0])
         data = self._exec(cmd)
         data = data.split('\n')
         raw = []
         set = []
-        for line in data:
-            raw = line.split(' ')
-            dat = []
-            for tmp in raw:
-                if len(tmp) > 0:
-                    dat.append(tmp)
-            set.append(dat)
+        #----------------------------------------------------- for line in data:
+            #--------------------------------------------- raw = line.split(' ')
+            #---------------------------------------------------------- dat = []
+            #--------------------------------------------------- for tmp in raw:
+                #---------------------------------------------- if len(tmp) > 0:
+                    #------------------------------------------- dat.append(tmp)
+            #--------------------------------------------------- set.append(dat)
+        #--------------------------------------------------------------- vsz = 0
+        #--------------------------------------------------------------- rss = 0
+#------------------------------------------------------------------------------ 
+        #------------------------------------------------------ for line in set:
+            #-------------------------------------------------------------- try:
+                #------------------------------------------- vsz += int(line[4])
+                #------------------------------------------- rss += int(line[5])
+            #--------------------------------------------- except IndexError, e:
+                #------------------------------------------------- self.error(e)
         vsz = 0
         rss = 0
+        cpuper = 0.0
+        memper = 0.0
         
-        for line in set:
-            try:
-                vsz += int(line[4])
-                rss += int(line[5])
-            except IndexError, e:
-                self.error(e)
-        count = len(set)
+        count = 0
+        regex = '[a-z\s]+[0-9]+\s+([0-9\.]+)\s+([0-9\.]+)\s+([0-9]+)\s+([0-9]+)'
+        for line in data:
+            tmp = re.split(regex, line)
+            # 1 - % CPU
+            # 2 - % MEM
+            # 3 - VSZ
+            # 4 - RSS
+            vsz += int(tmp[3])
+            rss += int(tmp[4])
+            cpuper += float(tmp[1])
+            memper += float(tmp[2])
+            count += 1
+            
         print '--- Memory Usage Report For %s ---' % (filter)
         print 'PID Count: %s' % (count)
         print 'Shared Memory Usage: %sMB' % (round((vsz/count)/1024,2))
         print 'Total Resident Set Size: %sMB' % (round((rss/1024),2))
-        print 'MEM/PID: %sMB' % (round((rss/count)/1024,2)) 
+        print 'MEM/PID: %sMB' % (round((rss/count)/1024,2))
+        print '%%CPU: %s' % cpuper
+        print '%%MEM: %s' % memper
+        
         
 #===============================================================================
 # This function attempts to lookup against the configured RBL servers in an attempt to identify an RBL listing for the given ip address      
@@ -528,7 +549,10 @@ class sysadmin:
             
         str = '%s]' % str
         return str
-    
+
+#===============================================================================
+# Manifest generator function, traverses the provided path to provide a manifest file,    
+#===============================================================================
     def manifest(self,path):
         from os.path import join, getsize
         cfiles = 0
@@ -643,79 +667,7 @@ class sysadmin:
                     print f
                 print '--- END FAIL LIST ---'
             
-            
-            
-                
-            
-                    
-    
-    def filesystem_compare(self,opts):
-        
-        str ="""
-Depending on the number of files and folders, this comparrison can take a very long time, and be quite heavy on CPU usage.
-Are you sure you wish to continue?:"""
-        response = raw_input(str)
-        while response not in ('y','n'):
-            str = 'Invalid option, reply y or n:'
-            response = raw_input(str)
-        if response == 'n':
-            print 'Exiting on user request...'
-            sys.exit(0)
-        elif response == 'y':
-            
-            path = opts[0]
-            path2 = opts[1]
-            
-            if not os.path.isdir(path):
-                print 'Path is not directory:',path
-                sys.exit(1)
-            elif not os.path.isdir(path2):
-                print 'Path is not directory:',path2
-                sys.exit(1)
-            else:
-                #path1
-                data1 = self._walkhash(path)
-                #path2
-                data2 = self._walkhash(path2)
-                #paths
-                paths1 = []
-                paths2 = []
-                hashes1 = {}
-                hashes2 = {}
-                for fdata in data1:
-                    paths1.append(fdata['path'])
-                    hashes1[fdata['path']] = fdata['hash']
-                for fdata in data2:
-                    paths2.append(fdata['path'])
-                    hashes2[fdata['path']] = fdata['hash']
-                print '--- Begin fscompare ---'
-                print '-- Now comparing:',path,'to',path2
-                
-                for fpath in paths1:
-                    if fpath not in paths2:
-                        #- print 'Missing File:',fpath,'Does not exist in',path2
-                        cmd = 'cp %s%s %s%s' % (path,fpath, path2,fpath)
-                        print cmd
-                    # elif (hashes1[fpath]['md5'] != hashes2[fpath]['md5']) or (hashes1[fpath]['crc32'] != hashes2[fpath]['crc32']):
-                        # print 'File HASH fail:',fpath,'file hashes do not match'
-                        #----------------------- print path,fpath,hashes1[fpath]
-                        #---------------------- print path2,fpath,hashes2[fpath]
-                        
-                #--------------------- print '-- Now comparing:',path2,'to',path
-#------------------------------------------------------------------------------ 
-                #------------------------------------------ for fpath in paths2:
-                    #----------------------------------- if fpath not in paths1:
-                        #-- print 'Missing File:',fpath,'Does not exist in',path
-                    # elif (hashes2[fpath]['md5'] != hashes1[fpath]['md5']) or (hashes2[fpath]['crc32'] != hashes1[fpath]['crc32']):
-                        # print 'File HASH fail:',fpath,'file hashes do not match'
-                        #---------------------- print path2,fpath,hashes2[fpath]
-                        #----------------------- print path,fpath,hashes1[fpath]
-                        
-                print '--- End fscompare ---'
-                        
-            
-                
-        
+
 #===============================================================================
 #    This function is incomplete, do not use
 #===============================================================================
@@ -810,12 +762,9 @@ def usage():
         Example: -c httpd_status -d /path/to/access.log
         Notes: This function assumes combined output, this may not work with other log types
         
-        windowsreturn (BETA) - This command will remove all \\r (^M) chars from a file, windows typically uses \\r\\n for carriage returns, this causes issues particularly when used in bash scripts
+        windowsreturn - This command will remove all \\r (^M) chars from a file, windows typically uses \\r\\n for carriage returns, this causes issues particularly when used in bash scripts
         Example: -c windowsreturn -d /path/to/file
         Notes: This will overwrite the original file, as such make sure you have a backup
-        
-        fscompare - This command will attempt to compare files between two directories, checking if they exist and their file hashes
-        Example: -c fscompare -d /path/to/folder1,/path/toi/folder2
         
         manifest (BETA) - This command will attempt to iterate the given path and generate an md5 manifest file for all files in that path and it's subdirectories, or verify an existing manifest
         Example: -c manifest -d /path/to/folder
@@ -853,8 +802,6 @@ def main():
             sa.appmem(opts[0])
         elif options.command == 'checksum':
             sa.checksum(opts[0])
-        elif options.command == 'webuser':
-            sa.webuser(opts)
         elif options.command == 'rblcheck':
             sa.rblcheck(opts)
         elif options.command == 'httpd_stats':
