@@ -8,6 +8,7 @@
 """
 try:
     import ConfigParser,os,sys,re,time,string,socket,threading,thread,traceback
+    from signal import signal, SIGTERM, SIGINT, SIGHUP
     from zlib import crc32
     from optparse import OptionParser,OptionGroup, OptParseError
 except ImportError, e:
@@ -70,7 +71,7 @@ class sysadmin:
             #cant use error func here as uses verbose funtion
             print 'Config file error: ',cfgPath
             print e
-            sys.exit(0)
+            sysexit()
     
     def progress(self,str):
         str = " %s" % str
@@ -166,7 +167,7 @@ class sysadmin:
             if response == 'n':
                 self.verbose('User decided not to proceed')
                 print 'Exiting on user request...'
-                sys.exit(0)
+                sysexit()
             elif response == 'y':
                 self.verbose('User decided to proceed')
                 print 'Proceeding on user request ... be advised large files take a long time to process'
@@ -238,7 +239,7 @@ class sysadmin:
         if (hasattr(opts, 'path') and opts.path != None) and (hasattr(opts, 'cs_from') and opts.cs_from != None) and (hasattr(opts, 'cs_to') and opts.cs_to != None):
             if opts.cs_from == opts.cs_to:
                 print 'Source and Destination encodings are the same, aborting ...'
-                sys.exit(1)
+                sysexit(1)
             try:
                 sF = file(opts.path, 'r')
                 tPath = '%s.%s' % (opts.path, opts.cs_to)
@@ -271,7 +272,7 @@ class sysadmin:
                                     answer = raw_input('Invalid response (%s/%s):' % (opts.cs_from,enc))
                                 if answer == opts.cs_to:
                                     print 'Source and Destination encodings are the same, aborting ...'
-                                    sys.exit(1)
+                                    sysexit(1)
                                 opts.cs_from = answer
                     #string out the BOM
                     if gotBOM == True:
@@ -289,7 +290,7 @@ class sysadmin:
                                                     
         else:
             print 'Path, source charset and dest charset are required'
-            sys.exit(1)
+            sysexit(1)
  
 #===============================================================================
 # This function parses the output of ps aux to generate information on the memory allocations to a given process name       
@@ -366,7 +367,7 @@ class sysadmin:
                     #print e
             except KeyboardInterrupt:
                 print '\n^C Received Aborting RBL Check'
-                sys.exit(0)
+                sysexit(1)
             
             if addr != False:
                 print 'IP(%s) is listed at RBL(%s)' % (ip,rbl)
@@ -436,7 +437,7 @@ class sysadmin:
           
             for line in open(opts[0],'r'):
                 #dat = line.split(' ')
-                dat = re.split('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s-\s[^\]]+\]\s"[^"]+"\s([0-9]+)\s(-|[0-9]+)', line)
+                dat = re.split('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s-\s[^\]]+\]\s".*"\s([0-9]+)\s(-|[0-9]+)', line)
                 #-------------------------------------------------------- 1 = ip
                 #-------------------------------------------------------- 2 = HTTP code
                 #-------------------------------------------------------- 3 = Bytes
@@ -444,7 +445,7 @@ class sysadmin:
                 #at this split the status code should be in dat[8] and the bytes transfered in dat[9]
                 try:
                     ips[dat[1]]+=1
-                except KeyError,IndexError:
+                except:
                     ips[dat[1]] = 1
                 try:
                     if len(dat[2]) > 0:
@@ -501,7 +502,7 @@ class sysadmin:
                     if response == 'y':
                         count = 0
                     elif response == 'n':
-                        sys.exit(0)
+                        sysexit()
                         
         else:
             self.error('404 file not found! %s ' % (opts[0]))  
@@ -518,7 +519,7 @@ class sysadmin:
         self.verbose('error()')
         print 'ERROR: ',e
         if exit:
-            sys.exit(1)
+            sysexit(1)
         
     def verbose(self,str):
         if self.v:
@@ -571,7 +572,7 @@ class sysadmin:
                 q = 'Invalid response (y/n):'
                 a = raw_input(q)
             if a == 'n':
-                sys.exit(0)
+                sysexit()
             else:
                 print
                 tfiles = cfiles
@@ -685,7 +686,7 @@ You must now confirm that you have the legal right to proceed with this scan.
             response = raw_input(str)
         if response == 'n':
             print 'Exiting on user request...'
-            sys.exit(0)
+            sysexit()
         elif response == 'y':
             str = """
 You have chose to proceed with this network scan, you must now choose a scan type
@@ -728,6 +729,7 @@ class iconv_opts:
 
 class opts:
     slen = 0
+    exit = False
     
 def usage():
   
@@ -775,32 +777,34 @@ def usage():
     return help
 
 def crashdump():
-    print 'Opps! something went wrong, please forward the below to d.busby@saiweb.co.uk'
-    
-    print '--- BEGIN DUMP ---'
-    cla, exc, trbk = sys.exc_info()
-    excName = cla.__name__
-    try:
-        excArgs = exc.__dict__["args"]
-    except KeyError:
-        excArgs = "<no args>"
-    excTb = traceback.format_tb(trbk, 5)
-    
-    str = ''
-    for line in excTb:
-        str = '%s%s' % (str,line)
-    dump = """
- Error: %s
- Args: %s
- Trace:
-    
- %s
-    """ % (excName,excArgs,str)
-    import base64
-    
-    dump = base64.b64encode(dump)               
-    print dump
-    print '--- END DUMP ---'
+    #only crash dump if unexpected exit
+    if opts.exit == False:
+        print 'Opps! something went wrong, please forward the below to d.busby@saiweb.co.uk'
+        
+        print '--- BEGIN DUMP ---'
+        cla, exc, trbk = sys.exc_info()
+        excName = cla.__name__
+        try:
+            excArgs = exc.__dict__["args"]
+        except KeyError:
+            excArgs = "<no args>"
+        excTb = traceback.format_tb(trbk, 5)
+        
+        str = ''
+        for line in excTb:
+            str = '%s%s' % (str,line)
+        dump = """
+     Error: %s
+     Args: %s
+     Trace:
+        
+     %s
+        """ % (excName,excArgs,str)
+        import base64
+        
+        #dump = base64.b64encode(dump)               
+        print dump
+        print '--- END DUMP ---'
 
 def main():
     try:
@@ -843,8 +847,27 @@ def main():
                 print 'Command not found "%s"' % (options.command)
     except:
         crashdump()
+ 
+def sysexit(ret=0):
+    opts.exit = True
+    sys.exit(ret)      
+ #===============================================================================
+# signal handler
+#===============================================================================
+def signals():
+    signal(SIGTERM,sighandler)
+    signal(SIGINT,sighandler)
+#===============================================================================
+# signal handler callback
+#===============================================================================
+def sighandler(signum,frame):
+    if signum == SIGINT:
+        
+        print
+        print 'Got ^C Aborting ...'
+        sysexit(1)
        
-    
                 
 if __name__ == "__main__":
+    signals()
     main()
