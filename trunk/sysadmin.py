@@ -723,16 +723,20 @@ class sysadmin:
 
             #if we haven't exised we are continuing!
             
-            # q = 'You have selected %s please choose report type (warn/full):' % dbs[a]
-            #----------------------------------------------------------- rdb = a
-            #-------------------------------------------------- a = raw_input(q)
-#------------------------------------------------------------------------------ 
-            #------------------------------- while a not in ('warn','full','q'):
-                #-------------------- q = 'Invalid selection (enter q to quit):'
-                #---------------------------------------------- a = raw_input(q)
-                #-------------------------------------------------- if a == 'q':
-                    #------------------------------------------------- sysexit()
-            #---------------------------------------------------------- type = a
+            olda = a
+            q = 'You have selected %s please choose report type (warn/full):' % dbs[a]
+            rdb = a
+            a = raw_input(q)
+
+            while a not in ('warn','full','q'):
+                q = 'Invalid selection (enter q to quit):'
+                a = raw_input(q)
+                if a == 'q':
+                    sysexit()
+            
+            type = a
+            
+            a = olda
             
             # tables
             sql =   '"select table_name, engine, data_length, index_length, (data_length + index_length) as total_length, ' \
@@ -767,7 +771,7 @@ class sysadmin:
                 #data_length checks
                 if int(dat[2]) <= min_data:
                     print '[!!] DATA_LENGTH %s <= %s' % (dat[2],min_data)
-                else:
+                elif type == 'full':
                     print '[--] DATA_LENGTH = %s' % dat[2]
                 index_ratio = float(dat[3])/float(dat[4])
                 #index_ratio checks
@@ -775,19 +779,20 @@ class sysadmin:
                     print '[!!] INDEX_LENGTH:TOTAL_LENGTH Ratio %s > %s' % (index_ratio,min_index)
                 elif index_ratio < min_index:
                     print '[!!] INDEX_LENGTH:TOTAL_LENGTH Ratio %s < %s' % (index_ratio,min_index)
-                else:
+                elif type == 'full':
                     print '[--] INDEX_LENGTH:TOTAL_LENGTH Ratio = %s' % index_ratio
                 #fragmentation checks
                 frag_ratio = float(dat[6])/float(dat[4])
                 if frag_ratio > min_frag:
                     print '[!!] Table is above thresholy fragmented %s%%' % (frag_ratio * 100.00)
-                else:
+                elif type == 'full':
                     print '[--] Table fragmentation below threshold currently %s%%' %  (frag_ratio * 100.00)
                     
                 #general information
-                print '[--] TOTAL_LENGTH = %sMB' % round(float(float(dat[4])/1024/1024),2)
-                print '[--] TOTAL_ROWS = %s' % dat[5]
-                print '[--] UPDATE_TIME = %s %s' % (dat[7],dat[8])
+                if type == 'full':
+                    print '[--] TOTAL_LENGTH = %sMB' % round(float(float(dat[4])/1024/1024),2)
+                    print '[--] TOTAL_ROWS = %s' % dat[5]
+                    print '[--] UPDATE_TIME = %s %s' % (dat[7],dat[8])
                 
                 print '--- END Report for %s ---' % dbs[a]
                     
