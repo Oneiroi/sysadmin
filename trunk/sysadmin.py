@@ -784,7 +784,7 @@ class sysadmin:
                 #fragmentation checks
                 frag_ratio = float(dat[6])/float(dat[4])
                 if frag_ratio > min_frag:
-                    print '[!!] Table is above thresholy fragmented %s%%' % (frag_ratio * 100.00)
+                    print '[!!] Table is above threshold fragmented %s%%' % (frag_ratio * 100.00)
                 elif type == 'full':
                     print '[--] Table fragmentation below threshold currently %s%%' %  (frag_ratio * 100.00)
                     
