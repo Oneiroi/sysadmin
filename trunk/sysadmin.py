@@ -665,8 +665,132 @@ class sysadmin:
                 for f in failed:
                     print f
                 print '--- END FAIL LIST ---'
+    
+#===============================================================================
+#    Translation of dbstat.php grom the adimpleo project.
+#    thanks to: Trent Hornibrook (http://mysqldbahelp.com/) for technical input for dbstat.php
+#===============================================================================
+    def adimpleo(self):
+        import getpass
+        min_data    = 0     #minimum table size (bytes) to report  
+        min_index   = 0.5   #minimum % for index of total table size 1.0 being 100%
+        min_frag    = 0.05  #minimum % threshold to alert for table fragmentation 0.05 (5%) recomended.
+ 
+        print 'In order to proceed I will need some more infromation about your mySQL server...'
+        print 'This tool does not store your details so you will be prompted each time'
+        
+        q = 'Please supply username:'
+        usr = raw_input(q)
+        q = 'Please supply password (Remember to escape any required chars):'
+        pwd = getpass.getpass(q)
+        q = 'Please supply host:'
+        host = raw_input(q)
+        mysqlcmd = 'mysql -h %s -u %s -p%s -e' % (host,usr,pwd)
+        dbraw = self._exec('%s "show databases\g" 2>&1' % (mysqlcmd))
+        
+        if re.search('^ERROR',dbraw):
+            print 'Failed to connect to mysql with the provided details, error follows...'
+            print dbraw
+            sysexit()
+        else:
+            dbs = re.split('\n', dbraw)
+            # 0 - Is always the header we can skip over it
+            del dbs[0]
             
+            print 'I found %s Databases, please select the one to report on' % len(dbs)
+            print
+            
+            
+            index = 0
+            for db in dbs:
+                print '%s)'%index,db
+                index += 1
+                
+            q = 'Please enter number: '
+            a = raw_input(q)
+            
+            if a != 'q':
+                a = int(a)
+                
+            while a not in range(len(dbs)+1) and a != 'q':
+                 q = 'Invalid selection (enter q to quit):'
+                 a = raw_input(q)
+                 if a != 'q':
+                    a = int(a)
 
+            if a == 'q':
+                sysexit()
+
+            #if we haven't exised we are continuing!
+            
+            # q = 'You have selected %s please choose report type (warn/full):' % dbs[a]
+            #----------------------------------------------------------- rdb = a
+            #-------------------------------------------------- a = raw_input(q)
+#------------------------------------------------------------------------------ 
+            #------------------------------- while a not in ('warn','full','q'):
+                #-------------------- q = 'Invalid selection (enter q to quit):'
+                #---------------------------------------------- a = raw_input(q)
+                #-------------------------------------------------- if a == 'q':
+                    #------------------------------------------------- sysexit()
+            #---------------------------------------------------------- type = a
+            
+            # tables
+            sql =   '"select table_name, engine, data_length, index_length, (data_length + index_length) as total_length, ' \
+                    'table_rows, data_free, update_time from information_schema.tables where engine is not null and table_schema=\'%s\' order by total_length desc\g" 2>&1' % dbs[a]
+                    
+            dbraw = self._exec('%s %s' % (mysqlcmd,sql))
+            
+            if re.search('^ERROR',dbraw):
+                print 'Failed to get data, error follows ...'
+                print dbraw
+                sysexit()
+            
+            lines = re.split('\n',dbraw)
+            #0 = headers
+            del lines[0]
+            
+            print '--- Report for %s ---' % dbs[a]
+            for line in lines:
+                #0 - table_name
+                #1 - engine
+                #2 - data length
+                #3 - index length
+                #4 - total length
+                #5 - total rows
+                #6 - data_free
+                #7 - update_time part1
+                #8 - update_time part 2
+                dat = re.split('\s+',line)
+                
+                print '-- %s' % dat[0]
+                
+                #data_length checks
+                if int(dat[2]) <= min_data:
+                    print '[!!] DATA_LENGTH %s <= %s' % (dat[2],min_data)
+                else:
+                    print '[--] DATA_LENGTH = %s' % dat[2]
+                index_ratio = float(dat[3])/float(dat[4])
+                #index_ratio checks
+                if index_ratio > min_index:
+                    print '[!!] INDEX_LENGTH:TOTAL_LENGTH Ratio %s > %s' % (index_ratio,min_index)
+                elif index_ratio < min_index:
+                    print '[!!] INDEX_LENGTH:TOTAL_LENGTH Ratio %s < %s' % (index_ratio,min_index)
+                else:
+                    print '[--] INDEX_LENGTH:TOTAL_LENGTH Ratio = %s' % index_ratio
+                #fragmentation checks
+                frag_ratio = float(dat[6])/float(dat[4])
+                if frag_ratio > min_frag:
+                    print '[!!] Table is above thresholy fragmented %s%%' % (frag_ratio * 100.00)
+                else:
+                    print '[--] Table fragmentation below threshold currently %s%%' %  (frag_ratio * 100.00)
+                    
+                #general information
+                print '[--] TOTAL_LENGTH = %sMB' % round(float(float(dat[4])/1024/1024),2)
+                print '[--] TOTAL_ROWS = %s' % dat[5]
+                print '[--] UPDATE_TIME = %s %s' % (dat[7],dat[8])
+                
+                print '--- END Report for %s ---' % dbs[a]
+                    
 #===============================================================================
 #    This function is incomplete, do not use
 #===============================================================================
@@ -770,6 +894,10 @@ def usage():
         Example: -c manifest -d /path/to/folder
         Example: -c manifest -d /path/to/existing.manifest
         Notes: If bulding a new manifest this will write out a dd-Mon-YYYY.manifest file in your CWD (current working directory) so make sure you are not in the path you are indexing!
+        
+        adimpleo (BETA) - This command runs analytics against a mySQL server, no credentials are stored you will be prompted at runtime
+        Example: -c adimpleo
+        Notes: no -d flag is required, this is for security to prevent passwords showing up in shell history
                 
         
     """ % (sys.argv[0])
@@ -819,12 +947,18 @@ def main():
         sa.verbose('args parsed')
         
         if options.command == None:
-            parser.error('Command is a required input')
-        elif options.data == None:
-            parser.error('Data is a required input')
+            print usage()
+            print 'Command is a required input'
+            sysexit()
+        elif options.data == None and options.command != 'adimpleo':
+            print usage()
+            print 'Data is a required input'
+            sysexit()
         else:
             sa.verbose('Command: %s' % (options.command))
-            opts = options.data.split(',')
+            
+            if options.command != 'adimpleo':
+                opts = options.data.split(',')
             
             #todo: replace this, couldn't get switch statements working properly!
             if options.command == 'iconv':
@@ -843,6 +977,8 @@ def main():
                 sa.filesystem_compare(opts)
             elif options.command == 'manifest':
                 sa.manifest(opts[0])
+            elif options.command == 'adimpleo':
+                sa.adimpleo()
             else:
                 print 'Command not found "%s"' % (options.command)
     except:
