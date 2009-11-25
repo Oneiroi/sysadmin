@@ -374,7 +374,7 @@ class sysadmin:
                 print 'Returned: %s'  % (addr)
             else:
                 print 'IP(%s) is not listed at RBL(%s)' % (ip,rbl)
- 
+
 #===============================================================================
 # This function gives rough stats from a 'combined' apache logfile
 #===============================================================================
@@ -433,11 +433,14 @@ class sysadmin:
             lcount = 0;
             bytes = 0
             rcount = 0
+            
             ips = {}
-
+            
+            ltime = time.time()
+            lline = 0
+            linessec = 0
+            eta = 0              
             for line in open(opts[0],'r'):
-                
-                
                 dat = re.split('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s-\s[^\]]+\]\s".*"\s([0-9]+)\s(-|[0-9]+)', line)
                 
                 #-------------------------------------------------------- 1 = ip
@@ -472,10 +475,27 @@ class sysadmin:
                     rcount += 1
                 except IndexError, e:
                     print dat,e
-                
+                #import pdb; pdb.set_trace()
                 lcount += 1
+                ctime = time.time()
+                if (ctime - ltime) >= 1:
+                    #calc current processing speed
+                    if ltime > 0:
+                        linessec = round((lcount - lline) / (ctime - ltime),2)
+                    ltime = ctime
+                    lline = lcount
+                    #give an ETA
+                if (linessec > 0):
+                    eta = (ltotal - lcount) / linessec
+                    m, s = divmod(eta, 60)
+                    h, m = divmod(m, 60)
+                    etastr = "%d:%02d:%02d" % (h, m, s)
+                else:
+                    etastr = '--:--:--'
+
+                    
                 lper = round(((1.00*lcount)/(1.00*ltotal))*100.00,2)
-                self.progress(' Parsed %s/%s lines (%s%%)' % (lcount,ltotal,lper))
+                self.progress(' Parsed %s/%s lines (%s%%) %s/s ETA %s' % (lcount,ltotal,lper,linessec,etastr))
                 
             print
             print '--- HTTP Code stats ---'    
