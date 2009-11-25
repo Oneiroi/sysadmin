@@ -439,7 +439,8 @@ class sysadmin:
             ltime = time.time()
             lline = 0
             linessec = 0
-            eta = 0              
+            eta = 0
+            etastr = '--:--:--'              
             for line in open(opts[0],'r'):
                 dat = re.split('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s-\s[^\]]+\]\s".*"\s([0-9]+)\s(-|[0-9]+)', line)
                 
@@ -478,20 +479,20 @@ class sysadmin:
                 #import pdb; pdb.set_trace()
                 lcount += 1
                 ctime = time.time()
-                if (ctime - ltime) >= 1:
+                if (ctime - ltime) >= 2:
                     #calc current processing speed
                     if ltime > 0:
                         linessec = round((lcount - lline) / (ctime - ltime),2)
                     ltime = ctime
                     lline = lcount
                     #give an ETA
-                if (linessec > 0):
-                    eta = (ltotal - lcount) / linessec
-                    m, s = divmod(eta, 60)
-                    h, m = divmod(m, 60)
-                    etastr = "%d:%02d:%02d" % (h, m, s)
-                else:
-                    etastr = '--:--:--'
+                    if (linessec > 0):
+                        eta = (ltotal - lcount) / linessec
+                        m, s = divmod(eta, 60)
+                        h, m = divmod(m, 60)
+                        etastr = "%d:%02d:%02d" % (h, m, s)
+                    else:
+                        etastr = '--:--:--'
 
                     
                 lper = round(((1.00*lcount)/(1.00*ltotal))*100.00,2)
