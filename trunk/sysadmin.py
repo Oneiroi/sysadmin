@@ -434,32 +434,37 @@ class sysadmin:
             bytes = 0
             rcount = 0
             ips = {}
-          
+
             for line in open(opts[0],'r'):
-                #dat = line.split(' ')
+                
+                
                 dat = re.split('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s-\s[^\]]+\]\s".*"\s([0-9]+)\s(-|[0-9]+)', line)
+                
                 #-------------------------------------------------------- 1 = ip
                 #-------------------------------------------------------- 2 = HTTP code
                 #-------------------------------------------------------- 3 = Bytes
                 
-                #at this split the status code should be in dat[8] and the bytes transfered in dat[9]
+                #increment count for this ip by one, or cerate a new entry if this is the first occurance
                 try:
                     ips[dat[1]]+=1
                 except:
                     ips[dat[1]] = 1
+                
                 try:
+                    #check if we have an entry for the http code
                     if len(dat[2]) > 0:
                         rcode = self._toint(dat[2])
                     else:
                         rcode = 0
-                    
+                    #check if we have an entry for the byte size transfered
                     if len(dat[3]) > 0:
                         if dat[3] == '-':
-                            continue
+                            bytes += 0
                         else:
                             bytes += self._toint(dat[3])
                     else:
                         bytes += 0
+                    #update response code stats
                     try:
                         codes[rcode]['count'] += 1
                     except KeyError, e:
@@ -467,10 +472,11 @@ class sysadmin:
                     rcount += 1
                 except IndexError, e:
                     print dat,e
+                
                 lcount += 1
                 lper = round(((1.00*lcount)/(1.00*ltotal))*100.00,2)
                 self.progress(' Parsed %s/%s lines (%s%%)' % (lcount,ltotal,lper))
-            
+                
             print
             print '--- HTTP Code stats ---'    
             for code in codes:
