@@ -533,25 +533,34 @@ class sysadmin:
                         
         else:
             self.error('404 file not found! %s ' % (opts[0]))  
-            
+#===============================================================================
+#    basic hack str to int type        
+#===============================================================================
     def _toint(self,str):
-        try:
-            str = str.strip()
-            return int(''.join([c for c in str if c in '1234567890']))
-        except ValueError, e:
-            self.error('_toint() error %s' % (e),exit=False)   
+        if str.__class__ == 'str':
+            try:
+                str = str.strip()
+                return int(''.join([c for c in str if c in '1234567890']))
+            except ValueError, e:
+                self.error('_toint() error %s' % (e),exit=False)   
         
-                          
+#===============================================================================
+#    wrapper to print out error and sys.exit(1)              
+#===============================================================================
     def error(self,e,exit=True):
         self.verbose('error()')
         print 'ERROR: ',e
         if exit:
             sysexit(1)
-        
+#===============================================================================
+#    verbose output function, prints out it verbose true
+#===============================================================================
     def verbose(self,str):
         if self.v:
             print'%s: %s' % (time.time(),str)
-        
+#===============================================================================
+#    this function executes a command on the host using os.popen, and returns all lines
+#===============================================================================
     def _exec(self, cmd):
         self.verbose('_exec(%s)' % (cmd))
         prg = os.popen(cmd,"r")
@@ -560,7 +569,10 @@ class sysadmin:
             str += line
 
         return str.rstrip('\n')
-    
+#===============================================================================
+#    this function will display a progress bar for use in the cli, 
+#    this is not intellegent about the current terminal size however, so rendering errors may occur at lower resolutions
+#===============================================================================
     def progressbar(self,cper,clen):
         
         str = '['
@@ -713,12 +725,74 @@ class sysadmin:
         q = 'Please supply host:'
         host = raw_input(q)
         mysqlcmd = 'mysql -h %s -u %s -p%s -e' % (host,usr,pwd)
+        
+        q = 'Stage 1 will analyse your mySQL configuration, do you want to skip this step? (y/n):'
+        a = raw_input(q)
+        while a not in ('y','n'):
+            q = 'Invalid input enter y or n:'
+            a = raw_input(q)
+            
+        if a == 'n':
+            dbraw = self._exec('%s "show status\g" 2>&1' % (mysqlcmd))
+            if re.search('^ERROR',dbraw):
+                print 'Failed to connect to mysql with the provided details, error follows...'
+                print dbraw
+                sys.exit(1)
+            lines = re.split('\n',dbraw)
+            set = {}
+            for line in lines:
+                
+                res = re.split('([a-zA-Z_]+)\t([0-9]+)',line.strip())
+                #buggered if I know why this returning a 4 part array
+                if len(res) == 4:
+                    set.update({res[1]:res[2]})
+                           
+            print '--- Report for %s ---' % host
+            #threading stats
+            #connection stats
+            #memory stats
+            #query cache
+            
+            if int(set['Qcache_total_blocks']) > 0:
+                #int conversions
+                set['Qcache_free_blocks'] = int(set['Qcache_free_blocks'])
+                set['Qcache_free_memory'] = int(set['Qcache_free_memory'])
+                set['Qcache_hits'] = int(set['Qcache_hits'])
+                set['Com_select'] = int(set['Com_select'])
+                set['Com_insert'] = int(set['Com_insert'])
+                set['Com_delete'] = int(set['Com_delete'])
+                set['Com_update'] = int(set['Com_update'])
+                set['Com_replace'] = int(set['Com_replace'])
+                                
+                Qfrag = set['Qcache_free_blocks']/set['Qcache_free_memory']
+                """Query Cache efficiency would be Qcache_hits/(Com_select+Qcache_hits). 
+                As you can see we have to add Qcache_hits to Com_select to get total number of queries as if query cache hit happens Com_select is not incremented.
+                src: http://www.mysqlperformanceblog.com/2006/07/27/mysql-query-cache/
+                """
+                Qeff = set['Qcache_hits']/(set['Com_select']+set['Qcache_hits'])
+                """
+                    Query hit %  = Queries - Non cacheable / hits
+                """
+                Qhit = (set['Queries'] - (set['Com_insert']+set['Com_delete']+set['Com_update']+set['Com_replace']))/set['Qcache_hits']
+                
+            else:
+                print '[!!] Query cache is not enabled'
+            #joins stats
+            #open file stats
+            #table cache
+            #temp tables
+            #lock:wait
+            print '--- END Report for %s ---' % host
+            
+            
+        print 'Stage 2 will analyse a specific database on the server'
+        
         dbraw = self._exec('%s "show databases\g" 2>&1' % (mysqlcmd))
         
         if re.search('^ERROR',dbraw):
             print 'Failed to connect to mysql with the provided details, error follows...'
             print dbraw
-            sysexit()
+            sys.exit(1)
         else:
             dbs = re.split('\n', dbraw)
             # 0 - Is always the header we can skip over it
