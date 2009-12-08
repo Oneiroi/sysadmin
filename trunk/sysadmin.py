@@ -812,7 +812,7 @@ class sysadmin:
                 if Qeff >= 85 and Qeff <= 95:
                     print '[!-] Query cache efficiency is %s%%' % Qhit
                     print '[--] Consider raising your query_cache_size'
-                elif Qhit < 85:
+                elif Qeff < 85:
                     print '[!!] Query cache efficiency is %s%%' % Qhit
                     print '[--] Consider raising your query_cache_size'
                 else:
@@ -820,6 +820,7 @@ class sysadmin:
                     print '[--] Your query cache settings are fine'
                     
                 print '[--] The cache efficiency is the cache hits / (cache hits + cache misses)'
+                
                 
             else:
                 print '[!!] Query cache is not enabled'
