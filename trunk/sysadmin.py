@@ -52,7 +52,6 @@ class sysadmin:
 
         cfg = ConfigParser.RawConfigParser()
         cfg.read(cfgPath)
-
         try:
             self.v = cfg.getboolean('sysadmin', 'verbose')
             self.homedir = cfg.get('core', 'homedir')
@@ -726,13 +725,13 @@ class sysadmin:
         host = raw_input(q)
         mysqlcmd = 'mysql -h %s -u %s -p%s -e' % (host,usr,pwd)
         
-        q = 'Stage 1 will analyse your mySQL configuration, do you want to skip this step? (y/n):'
+        q = 'Stage 1 will analyse your mySQL configuration, do you want to proceed with this step? (y/n):'
         a = raw_input(q)
         while a not in ('y','n'):
             q = 'Invalid input enter y or n:'
             a = raw_input(q)
             
-        if a == 'n':
+        if a == 'y':
             dbraw = self._exec('%s "show status\g" 2>&1' % (mysqlcmd))
             if re.search('^ERROR',dbraw):
                 print 'Failed to connect to mysql with the provided details, error follows...'
@@ -755,25 +754,68 @@ class sysadmin:
             
             if int(set['Qcache_total_blocks']) > 0:
                 #int conversions
-                set['Qcache_free_blocks'] = int(set['Qcache_free_blocks'])
-                set['Qcache_free_memory'] = int(set['Qcache_free_memory'])
-                set['Qcache_hits'] = int(set['Qcache_hits'])
-                set['Com_select'] = int(set['Com_select'])
-                set['Com_insert'] = int(set['Com_insert'])
-                set['Com_delete'] = int(set['Com_delete'])
-                set['Com_update'] = int(set['Com_update'])
-                set['Com_replace'] = int(set['Com_replace'])
-                                
-                Qfrag = set['Qcache_free_blocks']/set['Qcache_free_memory']
+                set['Qcache_free_blocks'] = int(set['Qcache_free_blocks'])*1.00
+                set['Qcache_free_memory'] = int(set['Qcache_free_memory'])*1.00
+                set['Qcache_hits'] = int(set['Qcache_hits'])*1.00
+                set['Com_select'] = int(set['Com_select'])*1.00
+                set['Com_insert'] = int(set['Com_insert'])*1.00
+                set['Com_delete'] = int(set['Com_delete'])*1.00
+                set['Com_update'] = int(set['Com_update'])*1.00
+                set['Com_replace'] = int(set['Com_replace'])*1.00
+                
+                #in mySQL 5.1.31 the var Queries appears
+                # this is a workaround
+                
+                #
+
+#===============================================================================
+# http://dev.mysql.com/doc/refman/5.1/en/server-status-variables.html#statvar_Queries
+# Queries
+# 
+# The number of statements executed by the server. This variable includes statements executed within stored programs, unlike the Questions variable. This variable was added in MySQL 5.1.31.
+# #
+# 
+# Questions
+# 
+# The number of statements executed by the server. As of MySQL 5.1.31, this includes only statements sent to the server by clients and no longer includes statements executed within stored programs, unlike the Queries variable.
+#===============================================================================
+
+                try:
+                    set['Queries'] = int(set['Queries'])*1.00
+                    set['Questions'] = int(set['Questions'])*1.00
+                    set['Questions'] += set['Queries']
+                except:
+                    set['Questions'] = int(set['Questions'])*1.00
+                            
+                Qfrag = round(set['Qcache_free_blocks']/set['Qcache_free_memory']*100.00,2)
                 """Query Cache efficiency would be Qcache_hits/(Com_select+Qcache_hits). 
                 As you can see we have to add Qcache_hits to Com_select to get total number of queries as if query cache hit happens Com_select is not incremented.
                 src: http://www.mysqlperformanceblog.com/2006/07/27/mysql-query-cache/
                 """
-                Qeff = set['Qcache_hits']/(set['Com_select']+set['Qcache_hits'])
+                Qeff = round(set['Qcache_hits']/(set['Com_select']+set['Qcache_hits'])*100.00,2)
                 """
                     Query hit %  = Queries - Non cacheable / hits
                 """
-                Qhit = (set['Queries'] - (set['Com_insert']+set['Com_delete']+set['Com_update']+set['Com_replace']))/set['Qcache_hits']
+                Qhit = round((set['Questions'] - (set['Com_insert']+set['Com_delete']+set['Com_update']+set['Com_replace']))/set['Qcache_hits']*100.00,2)
+                
+                if Qfrag > min_frag*100:
+                    print '[!!] Query cache is %s%% fragmented' % Qfrag
+                    print '[--] You can run "FLUSH QUERY CACHE" to purge your cache'
+                else:
+                    print '[--] Query cache is %s%% fragmented' % Qfrag
+                
+                #todo: research bounds for good/bad eff    
+                print '[!!] Query cache efficiency is %s%%' % Qeff
+                
+                if Qhit >= 85 and Qhit <= 95:
+                    print '[!-] Query cache hit rate is %s%%' % Qhit
+                    print '[--] Consider raising your query_cache_size'
+                elif Qhit < 85:
+                    print '[!!] Query cache hit rate is %s%%' % Qhit
+                    print '[--] Consider raising your query_cache_size'
+                else:
+                    print '[--] Query cache hit rate is %s%%' % Qhit
+                    print '[--] Your query cache settings are fine'
                 
             else:
                 print '[!!] Query cache is not enabled'
