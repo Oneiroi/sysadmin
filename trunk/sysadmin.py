@@ -795,12 +795,12 @@ class sysadmin:
                 note: basically says the amount of time the cache is hit for queries that can be cached
                 """
                 Qeff = round(set['Qcache_hits']/(set['Com_select']+set['Qcache_hits'])*100.00,2)
-                """
-                Query hit %  = Queries - Non cacheable / hits
-                
-                Note: basically the amount of times the cache is used in comparrision to the total queries
-                """
-                Qhit = round(1-(set['Questions'] - (set['Com_insert']+set['Com_delete']+set['Com_update']+set['Com_replace']))/set['Qcache_hits']*100.00,2)
+                #----------------------------------------------------------- """
+                #----------------- Query hit %  = Queries - Non cacheable / hits
+#------------------------------------------------------------------------------ 
+                # Note: basically the amount of times the cache is used in comparrision to the total queries
+                #----------------------------------------------------------- """
+                # Qhit = round((set['Questions'] - (set['Com_insert']+set['Com_delete']+set['Com_update']+set['Com_replace']))/set['Qcache_hits']*100.00,2)
                 
                 
                 if Qfrag > min_frag*100:
@@ -808,19 +808,18 @@ class sysadmin:
                     print '[--] You can run "FLUSH QUERY CACHE" to purge your cache'
                 else:
                     print '[--] Query cache is %s%% fragmented' % Qfrag
-                
-                #todo: research bounds for good/bad eff    
-                print '[!!] Query cache efficiency is %s%%' % Qeff
-                
-                if Qhit >= 85 and Qhit <= 95:
-                    print '[!-] Query cache hit rate is %s%%' % Qhit
+                               
+                if Qeff >= 85 and Qeff <= 95:
+                    print '[!-] Query cache efficiency is %s%%' % Qhit
                     print '[--] Consider raising your query_cache_size'
                 elif Qhit < 85:
-                    print '[!!] Query cache hit rate is %s%%' % Qhit
+                    print '[!!] Query cache efficiency is %s%%' % Qhit
                     print '[--] Consider raising your query_cache_size'
                 else:
-                    print '[--] Query cache hit rate is %s%%' % Qhit
+                    print '[--] Query cache efficiency is %s%%' % Qhit
                     print '[--] Your query cache settings are fine'
+                    
+                print '[--] The cache efficiency is the cache hits / (cache hits + cache misses)'
                 
             else:
                 print '[!!] Query cache is not enabled'
@@ -854,7 +853,7 @@ class sysadmin:
                 print '%s)'%index,db
                 index += 1
                 
-            q = 'Please enter number: '
+            q = 'Please enter number (q to quit): '
             a = raw_input(q)
             
             if a != 'q':
