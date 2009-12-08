@@ -810,13 +810,13 @@ class sysadmin:
                     print '[--] Query cache is %s%% fragmented' % Qfrag
                                
                 if Qeff >= 85 and Qeff <= 95:
-                    print '[!-] Query cache efficiency is %s%%' % Qhit
+                    print '[!-] Query cache efficiency is %s%%' % Qeff
                     print '[--] Consider raising your query_cache_size'
                 elif Qeff < 85:
-                    print '[!!] Query cache efficiency is %s%%' % Qhit
+                    print '[!!] Query cache efficiency is %s%%' % Qeff
                     print '[--] Consider raising your query_cache_size'
                 else:
-                    print '[--] Query cache efficiency is %s%%' % Qhit
+                    print '[--] Query cache efficiency is %s%%' % Qeff
                     print '[--] Your query cache settings are fine'
                     
                 print '[--] The cache efficiency is the cache hits / (cache hits + cache misses)'
