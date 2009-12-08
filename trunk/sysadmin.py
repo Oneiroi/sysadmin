@@ -791,16 +791,17 @@ class sysadmin:
                 """Query Cache efficiency would be Qcache_hits/(Com_select+Qcache_hits). 
                 As you can see we have to add Qcache_hits to Com_select to get total number of queries as if query cache hit happens Com_select is not incremented.
                 src: http://www.mysqlperformanceblog.com/2006/07/27/mysql-query-cache/
+                
+                note: basically says the amount of time the cache is hit for queries that can be cached
                 """
                 Qeff = round(set['Qcache_hits']/(set['Com_select']+set['Qcache_hits'])*100.00,2)
-                #----------------------------------------------------------- """
-                    #------------- Query hit %  = Queries - Non cacheable / hits
-                #----------------------------------------------------------- """
-                # Qhit = round((set['Questions'] - (set['Com_insert']+set['Com_delete']+set['Com_update']+set['Com_replace']))/set['Qcache_hits']*100.00,2)
                 """
-                    Qhit = hits / (hits + misses)
+                Query hit %  = Queries - Non cacheable / hits
+                
+                Note: basically the amount of times the cache is used in comparrision to the total queries
                 """
-                Qhit = round(set['Qcache_hits'] - (set['Qcache_hits'] + set['Com_select']))
+                Qhit = round(1-(set['Questions'] - (set['Com_insert']+set['Com_delete']+set['Com_update']+set['Com_replace']))/set['Qcache_hits']*100.00,2)
+                
                 
                 if Qfrag > min_frag*100:
                     print '[!!] Query cache is %s%% fragmented' % Qfrag
