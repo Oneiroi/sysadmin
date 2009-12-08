@@ -793,10 +793,14 @@ class sysadmin:
                 src: http://www.mysqlperformanceblog.com/2006/07/27/mysql-query-cache/
                 """
                 Qeff = round(set['Qcache_hits']/(set['Com_select']+set['Qcache_hits'])*100.00,2)
+                #----------------------------------------------------------- """
+                    #------------- Query hit %  = Queries - Non cacheable / hits
+                #----------------------------------------------------------- """
+                # Qhit = round((set['Questions'] - (set['Com_insert']+set['Com_delete']+set['Com_update']+set['Com_replace']))/set['Qcache_hits']*100.00,2)
                 """
-                    Query hit %  = Queries - Non cacheable / hits
+                    Qhit = hits / (hits + misses)
                 """
-                Qhit = round((set['Questions'] - (set['Com_insert']+set['Com_delete']+set['Com_update']+set['Com_replace']))/set['Qcache_hits']*100.00,2)
+                Qhit = round(set['Qcache_hits'] - (set['Qcache_hits'] + set['Com_select']))
                 
                 if Qfrag > min_frag*100:
                     print '[!!] Query cache is %s%% fragmented' % Qfrag
