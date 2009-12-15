@@ -454,11 +454,6 @@ class sysadmin:
                     ips[dat[1]] = 1
                 
                 try:
-                    #check if we have an entry for the http code
-                    if len(dat[2]) > 0:
-                        rcode = self._toint(dat[2])
-                    else:
-                        rcode = 0
                     #check if we have an entry for the byte size transfered
                     if len(dat[3]) > 0:
                         if dat[3] == '-':
@@ -472,9 +467,9 @@ class sysadmin:
                         bytes += 0
                     #update response code stats
                     try:
-                        codes[rcode]['count'] += 1
+                        codes[int(dat[2])]['count'] += 1
                     except KeyError, e:
-                        print 'Got invalid response code: ',rcode, 'DATA(',dat,')'
+                        print 'Got invalid response code: ',dat[2], 'DATA(',dat,')'
                     rcount += 1
                 except IndexError, e:
                     print dat,e
