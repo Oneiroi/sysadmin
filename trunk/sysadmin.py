@@ -455,16 +455,11 @@ class sysadmin:
                 
                 try:
                     #check if we have an entry for the byte size transfered
-                    if len(dat[3]) > 0:
-                        if dat[3] == '-':
-                            bytes += 0
-                        else:
-                            try:
-                                bytes += self._toint(dat[3])
-                            except:
-                               bytes += 0 
-                    else:
+                    if dat[3] == '-':
                         bytes += 0
+                    else:
+                        bytes += int(dat[3])
+                            
                     #update response code stats
                     try:
                         codes[int(dat[2])]['count'] += 1
