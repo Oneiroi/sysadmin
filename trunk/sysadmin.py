@@ -464,7 +464,10 @@ class sysadmin:
                         if dat[3] == '-':
                             bytes += 0
                         else:
-                            bytes += self._toint(dat[3])
+                            try:
+                                bytes += self._toint(dat[3])
+                            except:
+                               bytes += 0 
                     else:
                         bytes += 0
                     #update response code stats
