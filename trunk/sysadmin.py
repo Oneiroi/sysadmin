@@ -936,7 +936,56 @@ class sysadmin:
                     print '[--] UPDATE_TIME = %s %s' % (dat[7],dat[8])
                 
                 print '--- END Report for %s ---' % dbs[a]
-                    
+    
+    def sslinfo(self,opts):
+       print 'coming soon...'
+
+    def lbcheck(self):
+        print 'This function uses sockets to query each server in the list provided and compare the returned html'
+        print 'you will need to provide the server name, list of comma seperated ip\'s for comparrison and the URI'
+        print 'each server will need to be addressable from your current location for the tests to complete'
+        print 'NOTE: if your web app is designed to render dynamic content the hashes will allways be different'
+        print 
+        servername = raw_input('server name (www.domain.com): ')
+        uri = raw_input('URI: ')
+        hosts =  raw_input('ip list: ')
+        hosts = hosts.split(',')
+        res = {}
+        #--------------------------------------------------------- import socket
+        import httplib
+        #loop list getting data
+        for host in hosts:
+            conn = httplib.HTTPConnection(host)
+            headers = {"host":servername}
+            conn.request("GET",uri,{},headers)
+            resp = conn.getresponse()
+            data = resp.read()
+            #res.update({host:{'data':data,'hash':self._checksum(data),'code':re.split('HTTP/1\.1 ([0-9]+)',data)[1]}})
+            #------------- s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            #---------------------------------------------- s.connect((host,80))
+            #------------------------------- s.send("GET %s HTTP/1.1\n" % (uri))
+            #------------------------------- s.send("host: %s\n" % (servername))
+            #------------------------------------------------------ s.send("\n")
+            #--------------------------------------------------------- data = ''
+            #------------------------------------------------ tmp = s.recv(1024)
+            #----------------------------------------------- while len(tmp) > 0:
+                #------------------------------------ data = '%s%s' % (data,tmp)
+                #-------------------------------------------- tmp = s.recv(1024)
+            #--------------------------------------------------------- s.close()
+#------------------------------------------------------------------------------ 
+            # res.update({host:{'data':data,'hash':self._checksum(data),'code':re.split('HTTP/1\.1 ([0-9]+)',data)[1]}})
+#------------------------------------------------------------------------------ 
+        #------------------------------- html = re.split('<!DOCTYPE|<html',data)
+        #------------------------------------------------------- print len(html)
+#------------------------------------------------------------------------------ 
+        #----------------------------------------------------- #comparision loop
+        #---------------------------------------------------- for host in hosts:
+            print 'HTTP',resp.status,'HASH',self._checksum(data)['md5'],host
+            
+            
+        
+        
+        
 #===============================================================================
 #    This function is incomplete, do not use
 #===============================================================================
@@ -1092,18 +1141,21 @@ def main():
         
         sa.verbose('args parsed')
         
+        # excluded from required data list
+        edlist = ('adimpleo','lbcheck')
+        
         if options.command == None:
             print usage()
             print 'Command is a required input'
             sysexit()
-        elif options.data == None and options.command != 'adimpleo':
+        elif options.data == None and options.command not in edlist:
             print usage()
             print 'Data is a required input'
             sysexit()
         else:
             sa.verbose('Command: %s' % (options.command))
             
-            if options.command != 'adimpleo':
+            if options.command not in edlist:
                 opts = options.data.split(',')
             
             #todo: replace this, couldn't get switch statements working properly!
@@ -1125,6 +1177,8 @@ def main():
                 sa.manifest(opts[0])
             elif options.command == 'adimpleo':
                 sa.adimpleo()
+            elif options.command == 'lbcheck':
+                sa.lbcheck()
             else:
                 print 'Command not found "%s"' % (options.command)
     except:
