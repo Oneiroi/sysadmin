@@ -950,40 +950,28 @@ class sysadmin:
         uri = raw_input('URI: ')
         hosts =  raw_input('ip list: ')
         hosts = hosts.split(',')
+        auth = raw_input('Authentication information if required (username:password):')
+        if len(auth) > 0:
+        	import base64
+        	auth = base64.b64encode(auth)
+		auth = 'basic %s' % auth
         res = {}
         #--------------------------------------------------------- import socket
         import httplib
-        #loop list getting data
-        for host in hosts:
-            conn = httplib.HTTPConnection(host)
-            headers = {"host":servername}
-            conn.request("GET",uri,{},headers)
-            resp = conn.getresponse()
-            data = resp.read()
-            #res.update({host:{'data':data,'hash':self._checksum(data),'code':re.split('HTTP/1\.1 ([0-9]+)',data)[1]}})
-            #------------- s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            #---------------------------------------------- s.connect((host,80))
-            #------------------------------- s.send("GET %s HTTP/1.1\n" % (uri))
-            #------------------------------- s.send("host: %s\n" % (servername))
-            #------------------------------------------------------ s.send("\n")
-            #--------------------------------------------------------- data = ''
-            #------------------------------------------------ tmp = s.recv(1024)
-            #----------------------------------------------- while len(tmp) > 0:
-                #------------------------------------ data = '%s%s' % (data,tmp)
-                #-------------------------------------------- tmp = s.recv(1024)
-            #--------------------------------------------------------- s.close()
-#------------------------------------------------------------------------------ 
-            # res.update({host:{'data':data,'hash':self._checksum(data),'code':re.split('HTTP/1\.1 ([0-9]+)',data)[1]}})
-#------------------------------------------------------------------------------ 
-        #------------------------------- html = re.split('<!DOCTYPE|<html',data)
-        #------------------------------------------------------- print len(html)
-#------------------------------------------------------------------------------ 
-        #----------------------------------------------------- #comparision loop
-        #---------------------------------------------------- for host in hosts:
-            print 'HTTP',resp.status,'HASH',self._checksum(data)['md5'],host
-            
-            
         
+        i = 0
+        while True:
+        	i+=1
+        	print '----- Iteration %d (^C to abort) -----' % i
+       		#loop list getting data
+        	for host in hosts:
+           		conn = httplib.HTTPConnection(host)
+           		headers = {"host":servername,'Authorization':auth}
+			conn.request("GET",uri,{},headers)
+            		resp = conn.getresponse()
+            		data = resp.read()
+            		print 'HTTP',resp.status,'HASH',self._checksum(data)['md5'],host
+     
         
         
 #===============================================================================
