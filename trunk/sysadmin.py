@@ -470,7 +470,7 @@ class sysadmin:
                     #update response code stats
                     try:
                         codes[int(dat[2])]['count'] += 1
-                        if int(dat[2]) == 500 and a = 'y':
+                        if int(dat[2]) == 500 and a == 'y':
                         	print 'HTTP 500 - %s' % dat[4]
                     except KeyError, e:
                         print 'Got invalid response code: ',dat[2], 'DATA(',dat,')'
