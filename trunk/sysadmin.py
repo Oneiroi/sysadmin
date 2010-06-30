@@ -378,6 +378,13 @@ class sysadmin:
 # This function gives rough stats from a 'combined' apache logfile
 #===============================================================================
     def httpd_stats(self,opts):
+    	q = "Would you like to output http 500 errors? (y/n):"
+    	a = raw_input(q)
+    	
+    	while a not in ('y','n'):
+    		q = "Invalid response please enter y or n:"
+    		a = raw_input(q)
+    	
         #this was not fun to type!
         codes = {
                      100:{'desc':'continue','count':0},
@@ -463,6 +470,8 @@ class sysadmin:
                     #update response code stats
                     try:
                         codes[int(dat[2])]['count'] += 1
+                        if int(dat[2]) == 500 and a = 'y':
+                        	print 'HTTP 500 - %s' % dat[4]
                     except KeyError, e:
                         print 'Got invalid response code: ',dat[2], 'DATA(',dat,')'
                     rcount += 1
