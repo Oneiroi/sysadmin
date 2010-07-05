@@ -385,6 +385,9 @@ class sysadmin:
     		q = "Invalid response please enter y or n:"
     		a = raw_input(q)
     	
+    	if a == 'y':
+    		500tmp = open('/tmp/sysadmin_http500.tmp','w+')
+    	
         #this was not fun to type!
         codes = {
                      100:{'desc':'continue','count':0},
@@ -448,11 +451,12 @@ class sysadmin:
             eta = 0
             etastr = '--:--:--'              
             for line in open(opts[0],'r'):
-                dat = re.split('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s-\s[^\]]+\]\s".*"\s([0-9]+)\s(-|[0-9]+)', line)
+                dat = re.split('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s-\s[^\]]+\]\s"(.*)"\s([0-9]+)\s(-|[0-9]+)', line)
                 
                 #-------------------------------------------------------- 1 = ip
-                #-------------------------------------------------------- 2 = HTTP code
-                #-------------------------------------------------------- 3 = Bytes
+                #-------------------------------------------------------- 2 = url
+                #-------------------------------------------------------- 3 = http code
+                #-------------------------------------------------------- 4 = bytes
                 
                 #increment count for this ip by one, or cerate a new entry if this is the first occurance
                 try:
@@ -462,18 +466,18 @@ class sysadmin:
                 
                 try:
                     #check if we have an entry for the byte size transfered
-                    if dat[3] == '-':
+                    if dat[4] == '-':
                         bytes += 0
                     else:
-                        bytes += int(dat[3])
-                            
+                        bytes += int(dat[4])
+                    
                     #update response code stats
                     try:
-                        codes[int(dat[2])]['count'] += 1
-                        if int(dat[2]) == 500 and a == 'y':
-                        	print 'HTTP 500 - %s' % dat[4]
+                        codes[int(dat[3])]['count'] += 1
+                        if int(dat[3]) == 500 and a == 'y':
+                        	500tmp.write("HTTP 500 - %s\n" % dat[2])
                     except KeyError, e:
-                        print 'Got invalid response code: ',dat[2], 'DATA(',dat,')'
+                        print 'Got invalid response code: ',dat[3], 'DATA(',dat,')'
                     rcount += 1
                 except IndexError, e:
                     print dat,e
@@ -498,7 +502,9 @@ class sysadmin:
                     
                 lper = round(((1.00*lcount)/(1.00*ltotal))*100.00,2)
                 self.progress(' Parsed %s/%s lines (%s%%) %s/s ETA %s' % (lcount,ltotal,lper,linessec,etastr))
-                
+            
+            500tmp.close()
+            
             print
             print '--- HTTP Code stats ---'    
             for code in codes:
@@ -530,6 +536,10 @@ class sysadmin:
                     if response == 'y':
                         count = 0
                     elif response == 'n':
+                    	if a == 'y':
+                    		f = open('/tmp/sysadmin_http500.tmp','r')
+                    		print '--- http 500 stats ---'
+                    		print f.read()
                         sysexit()
                         
         else:
