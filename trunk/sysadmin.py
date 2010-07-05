@@ -475,7 +475,7 @@ class sysadmin:
                     try:
                         codes[int(dat[3])]['count'] += 1
                         if int(dat[3]) == 500 and a == 'y':
-                        	tmp.write("HTTP 500 - %s\n" % dat[2])
+                        	tmp.write("HTTP 500 - URL(%s) AGENT(%s)\n" % (dat[2],dat[5]))
                     except KeyError, e:
                         print 'Got invalid response code: ',dat[3], 'DATA(',dat,')'
                     rcount += 1
