@@ -503,7 +503,7 @@ class sysadmin:
                 lper = round(((1.00*lcount)/(1.00*ltotal))*100.00,2)
                 self.progress(' Parsed %s/%s lines (%s%%) %s/s ETA %s' % (lcount,ltotal,lper,linessec,etastr))
             
-            500tmp.close()
+            tmp.close()
             
             print
             print '--- HTTP Code stats ---'    
