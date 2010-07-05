@@ -386,7 +386,7 @@ class sysadmin:
     		a = raw_input(q)
     	
     	if a == 'y':
-    		500tmp = open('/tmp/sysadmin_http500.tmp','w+')
+    		tmp = open('/tmp/sysadmin_http500.tmp','w+')
     	
         #this was not fun to type!
         codes = {
@@ -475,7 +475,7 @@ class sysadmin:
                     try:
                         codes[int(dat[3])]['count'] += 1
                         if int(dat[3]) == 500 and a == 'y':
-                        	500tmp.write("HTTP 500 - %s\n" % dat[2])
+                        	tmp.write("HTTP 500 - %s\n" % dat[2])
                     except KeyError, e:
                         print 'Got invalid response code: ',dat[3], 'DATA(',dat,')'
                     rcount += 1
