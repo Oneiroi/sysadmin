@@ -438,6 +438,7 @@ class sysadmin:
             ltotal = 0;
             for line in open(opts[0],'r'):
                 ltotal +=1
+		self.progress('Current count %d lines'%ltotal)
             print
             lcount = 0;
             bytes = 0
