@@ -7,7 +7,7 @@
     @License: http://creativecommons.org/licenses/by-sa/2.0/uk/ CC BY-SA
 """
 try:
-    import ConfigParser,os,sys,re,time,string,socket,threading,thread,traceback
+    import ConfigParser,os,sys,re,time,string,socket,threading,thread,traceback,mmap
     from signal import signal, SIGTERM, SIGINT, SIGHUP
     from zlib import crc32
     from optparse import OptionParser,OptionGroup, OptParseError
@@ -452,7 +452,11 @@ class sysadmin:
             eta = 0
             etastr = '--:--:--'              
             for line in open(opts[0],'r'):
-                dat = re.split('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s-\s[^\]]+\]\s"(.*)"\s([0-9]+)\s(-|[0-9]+)', line)
+		m = mmap.mmap(-1,sys.getsizeof(line))
+		m.write(line)
+		m.seek(0)
+                dat = re.split('([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)\s-\s[^\]]+\]\s"(.*)"\s([0-9]+)\s(-|[0-9]+)', m.read())
+		m.close()
                 
                 #-------------------------------------------------------- 1 = ip
                 #-------------------------------------------------------- 2 = url
