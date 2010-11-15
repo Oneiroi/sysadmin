@@ -436,9 +436,12 @@ class sysadmin:
         if os.path.isfile(opts[0]):
             self.progress(' Please wait getting file stats...')
             ltotal = 0;
+	    lline = 0;
             for line in open(opts[0],'r'):
                 ltotal +=1
-		self.progress('Current count %d lines'%ltotal)
+		if(ltotal - lline) > 100000:
+			self.progress('Current count %d lines'%ltotal)
+			lline=ltotal
             print
             lcount = 0;
             bytes = 0
@@ -486,7 +489,7 @@ class sysadmin:
                 #import pdb; pdb.set_trace()
                 lcount += 1
                 ctime = time.time()
-                if (ctime - ltime) >= 2:
+                if (ctime - ltime) >= 5:
                     #calc current processing speed
                     if ltime > 0:
                         linessec = round((lcount - lline) / (ctime - ltime),2)
@@ -502,8 +505,8 @@ class sysadmin:
                         etastr = '--:--:--'
 
                     
-                lper = round(((1.00*lcount)/(1.00*ltotal))*100.00,2)
-                self.progress(' Parsed %s/%s lines (%s%%) %s/s ETA %s' % (lcount,ltotal,lper,linessec,etastr))
+                    lper = round(((1.00*lcount)/(1.00*ltotal))*100.00,2)
+               	    self.progress(' Parsed %s/%s lines (%s%%) %s/s ETA %s' % (lcount,ltotal,lper,linessec,etastr))
             
             if a == 'y':
             	tmp.close()
