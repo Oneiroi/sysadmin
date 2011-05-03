@@ -586,7 +586,7 @@ geoip_header_parser(request_rec * r)
 }
 
 
-static const char *geoip_scanproxy(cmd_parms *cmd, void *dummy, int arg)
+static const char *set_geoip_scanproxy(cmd_parms *cmd, void *dummy, int arg)
 {
 	geoip_server_config_rec *conf = (geoip_server_config_rec *)
 	ap_get_module_config(cmd->server->module_config, &geoip_module);
@@ -745,4 +745,5 @@ module AP_MODULE_DECLARE_DATA geoip_module = {
 	geoip_cmds,                  /* table of config file commands       */
 	geoip_register_hooks         /* register hooks                      */
 };
+
 
