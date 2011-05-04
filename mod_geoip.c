@@ -588,8 +588,17 @@ geoip_header_parser(request_rec * r)
 
 static const char *set_geoip_scanproxy(cmd_parms *cmd, void *dummy, int arg)
 {
-	geoip_server_config_rec *conf = (geoip_server_config_rec *)
-	ap_get_module_config(cmd->server->module_config, &geoip_module);
+	geoip_server_config_rec *conf;
+
+        /* is per directory config? */
+        if (cmd->path) {
+                geoip_dir_config_rec *dcfg = dummy;
+                dcfg->GeoIPEnabled = arg;
+                return NULL;
+        }
+        /* no then it is server config */
+        conf = (geoip_server_config_rec *)
+        ap_get_module_config(cmd->server->module_config, &geoip_module);
 
 	if (!conf)
 		return "mod_geoip: server structure not allocated";
