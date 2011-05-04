@@ -699,7 +699,7 @@ static void *make_geoip(apr_pool_t *p, server_rec *d)
 
 static const command_rec geoip_cmds[] =
 {
-	AP_INIT_FLAG("GeoIPScanProxyHeaders", geoip_scanproxy, NULL, RSRC_CONF, "Get IP from HTTP_CLIENT IP or X-Forwarded-For"),
+	AP_INIT_FLAG("GeoIPScanProxyHeaders", set_geoip_scanproxy, NULL, RSRC_CONF, "Get IP from HTTP_CLIENT IP or X-Forwarded-For"),
 	AP_INIT_FLAG("GeoIPEnable", set_geoip_enable, NULL, RSRC_CONF | OR_FILEINFO, "Turn on mod_geoip"),
 	AP_INIT_FLAG("GeoIPEnableUTF8", set_geoip_enable_utf8, NULL, RSRC_CONF, "Turn on utf8 characters for city names"),
 	AP_INIT_TAKE12("GeoIPDBFile", set_geoip_filename, NULL, RSRC_CONF, "Path to GeoIP Data File"),
