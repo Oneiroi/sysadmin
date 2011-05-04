@@ -85,6 +85,7 @@ typedef struct {
 	int GeoIPFlags;
 	int *GeoIPFlags2;
 	int scanProxyHeaders;
+	int debug;
 } geoip_server_config_rec;
 
 static const int GEOIP_NONE    = 0;
@@ -136,6 +137,7 @@ static void *create_geoip_server_config( apr_pool_t *p, server_rec *d )
 	conf->GeoIPFlags = GEOIP_STANDARD;
 	conf->GeoIPFlags2 = NULL;
 	conf->scanProxyHeaders = 0;
+	conf->debug = 0;
 	return (void *)conf;
 }
 
@@ -320,20 +322,32 @@ geoip_header_parser(request_rec * r)
 		return DECLINED;
 
 	if (!cfg->scanProxyHeaders) {
+		if(cfg->debug) ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, 0, r->server, "[mod_geoip]: scanProxyHeaders is Off, Using REMOTE_ADDR.");
 		ipaddr = r->connection->remote_ip;
 	}
 	else {
 		ap_add_common_vars(r);
 		if (apr_table_get(r->subprocess_env, "HTTP_CLIENT_IP")) {
 			ipaddr_ptr = (char *) apr_table_get(r->subprocess_env, "HTTP_CLIENT_IP");
+			if(cfg->debug) {
+				 ap_log_error(
+						APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, 
+						0,
+						r->server,
+						"[mod_geoip]: scanProxyHeaders is On (%s) . Using HTTP_CLIENT_IP (%s).",(r->connection->remote_ip,ipaddr_prt)
+				);
+			}
 		}
 		else if (apr_table_get(r->subprocess_env, "HTTP_X_FORWARDED_FOR")) {
+			if(cfg->debug) ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, 0, r->server, "[mod_geoip]: scanProxyHeaders is On. Using HTTP_X_FORWARDED_FOR.");
 			ipaddr_ptr = (char *) apr_table_get(r->subprocess_env, "HTTP_X_FORWARDED_FOR");
 		}
 		else if (apr_table_get(r->headers_in, "X-Forwarded-For")) {
+			if(cfg->debug) ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, 0, r->server, "[mod_geoip]: scanProxyHeaders is On. Using X-Forarded-For.");
 			ipaddr_ptr = (char *) apr_table_get(r->headers_in, "X-Forwarded-For");
 		}
 		else if (apr_table_get(r->subprocess_env, "HTTP_REMOTE_ADDR")) {
+			if(cfg->debug) ap_log_error(APLOG_MARK, APLOG_DEBUG | APLOG_NOERRNO, 0, r->server, "[mod_geoip]: scanProxyHeaders is On. Using HTTP_REMOTE_ADDR.");
 			ipaddr_ptr = (char *) apr_table_get(r->subprocess_env, "HTTP_REMOTE_ADDR");
 		}
 		if (!ipaddr_ptr) {
@@ -585,18 +599,25 @@ geoip_header_parser(request_rec * r)
 	return OK;
 }
 
+static const char *
+set_geoip_debug(cmd_parms *cmd, void *dummy, int arg)
+{
+        geoip_server_config_rec *conf;
+
+        conf = (geoip_server_config_rec *)
+        ap_get_module_config(cmd->server->module_config, &geoip_module);
+
+        if (!conf)
+                return "mod_geoip: server structure not allocated";
+
+        conf->debug = arg;
+        return NULL;
+}
 
 static const char *set_geoip_scanproxy(cmd_parms *cmd, void *dummy, int arg)
 {
 	geoip_server_config_rec *conf;
 
-        /* is per directory config? */
-        if (cmd->path) {
-                geoip_dir_config_rec *dcfg = dummy;
-                dcfg->GeoIPEnabled = arg;
-                return NULL;
-        }
-        /* no then it is server config */
         conf = (geoip_server_config_rec *)
         ap_get_module_config(cmd->server->module_config, &geoip_module);
 
