@@ -1,0 +1,17 @@
+listxattr will walk the given folder and dump out a base64 hash of the xattr value (same as you get using getfattr)
+
+Requires:
+    xattr
+        e.g. sudo pip install xattr / sudo easy_install xattr
+    python >= 2.6
+    
+
+Example usage:
+    python26 ./listxattr.py /path/to/filesystem | sort | m5dsum
+
+Do this on each node for a very quick way of seeing if each node is infact in sync.
+
+stripxattr will walk the given folder stripping all gluster xattrs from the file system, this should only be used if you intend to replace the filesystem with a known "good" copy using rsync.
+To ensure this is not accidetnyl triggered you must manuually fill in the required information when prompted as apposed to passing it on the command line, you will again be prompted to confirm you want to run the process.
+
+NOTE: You MUST unmount the filesystem if in use, you MUST shutdown any services access the file system, the filesystem MUST be synced from a known "good" copy and you MUST post sync run a self heal to ensure that the xattrs are again populated (http://docs.redhat.com/docs/en-US/Red_Hat_Storage_Software_Appliance/3.2/html/User_Guide/sect-User_Guide-Managing_Volumes-Self_heal.html)
