@@ -40,7 +40,7 @@ def main():
                 print('%s trusted.gifd: %s' % (root,b64encode(xattr.getxattr(root,'trusted.gfid'))))
             for attr in xattrs:
                 if reAFR.search(attr):
-                    print('%s %s: %s'%(root,attr,xattr,b64encode(getxattr(root,attr))))
+                    print('%s %s: %s'%(root,attr,b64encode(xattr.getxattr(root,attr))))
        
 if __name__ == '__main__':
     main()     
