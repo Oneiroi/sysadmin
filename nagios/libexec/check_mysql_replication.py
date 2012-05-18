@@ -147,7 +147,8 @@ if __name__ == '__main__':
             critical('Slave1 and master out of sync! slave log post %d master log pos %d'%(bmPos,asPos))
         
         verbose(options.verbose,'srv2 -> srv1 binglog positional check passed')
-        
+        ok('master-master check completed, no issues were detected')
+
     elif option.type == 'somethingelse':
         print 'do somethingelse'
     else:
