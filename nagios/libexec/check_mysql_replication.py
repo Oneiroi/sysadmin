@@ -4,7 +4,7 @@
     Author: David Busby (http://saiweb.co.uk)
     Program: check mysql replication
     Description: Compares two mysql connections checking slave and master status, assumes master-master relationship
-    Copyright: Copyright (c) 2009 David Busby (http://saiweb.co.uk)  & Psycle Interactive (http://psycle.com). All rights reserved.
+    Copyright: Copyright (c) 2009,2010,2011,2012 David Busby (http://saiweb.co.uk)  & Psycle Interactive (http://psycle.com). All rights reserved.
     
     v0.1 - assumes master master relationship between two servers
 """
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     """Type dependant execution"""
     verbose(options.verbose,'Opt validation passed moving onto type')
     if options.type == 'mastermaster':
-    
+        verbose(options.verbose,'type is mastermaster')
         #Checking replication A -> B
         #We need A master and B slave status data.
         p = Pool(2)
@@ -106,27 +106,47 @@ if __name__ == '__main__':
         d = p.map(partial_repl,['srv1','srv2'])
 
         #@todo: replace the positional lookups with associative lookups if at all possible, will negate issues in field order changes if it should ever occur.
-
+        
+        verbose(options.verbose,'slave running check')
         #Check slave is running!
         if d[0]['srv1']['slave'][0][10] != 'Yes':
             critical('Slave_IO is not running on srv1(%s) returned: %s'%(options.srv1,d[0]['srv1']['slave'][0][10]))
         if d[1]['srv2']['slave'][0][10] != 'Yes':
             critical('Slave_IO is not running on srv2(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave'][0][10]))
+        if d[0]['srv1']['slave'][0][10] != 'Yes':
+            critical('Slave_SQL is not running on srv1(%s) returned: %s'%(options.srv1,d[0]['srv1']['slave'][0][11]))
+        if d[1]['srv2']['slave'][0][10] != 'Yes':
+            critical('Slave_SQL is not running on srv2(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave'][0][11]))
 
+        verbose(options.verbose,'slave running check passed')
+        verbose(options.verbose,'srv1 -> srv2 binglog positional check')
         #Ok compare now A master to B slave using positional data.
         amLog = d[0]['srv1']['master'][0][0]
         amPos = d[0]['srv1']['master'][0][1]
+        asLog = d[0]['srv1']['slave'][0][5]
+        asPos = d[0]['srv1']['slave'][0][6]
+
+        bmLog = d[1]['srv2']['master'][0][0]
+        bmPos = d[1]['srv2']['master'][0][1]
         bsLog = d[1]['srv2']['slave'][0][5]
         bsPos = d[1]['srv2']['slave'][0][6]
         
         if amLog != bsLog:
-            critical('Slave reports master binary log of %s master reports %s' % (amLog,bsLog))
+            critical('Slave2 reports master binary log of %s master reports %s' % (amLog,bsLog))
 
         if amPos != bsPos:
-            critical('Slave and master out of sync! slave log post %d master log pos %d'%(amPos,bsPos)) 
+            critical('Slave2 and master out of sync! slave log post %d master log pos %d'%(amPos,bsPos)) 
 
+        verbose(options.verbose,'srv1 -> srv2 binglog positional check passed')
+        verbose(options.verbose,'srv2 -> srv1 binglog positional check')
+
+        if bmLog != asLog:
+            critical('Slave1 reports master binary log of %s master reports %s' % (bmLog,asLog))
+
+        if bmPos != asPos:
+            critical('Slave1 and master out of sync! slave log post %d master log pos %d'%(bmPos,asPos))
         
-        
+        verbose(options.verbose,'srv2 -> srv1 binglog positional check passed')
         
     elif option.type == 'somethingelse':
         print 'do somethingelse'
