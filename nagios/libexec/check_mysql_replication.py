@@ -43,8 +43,8 @@ def _get_repl_data(opts,sID):
 def _setopt():
     useage = '';
     parser = OptionParser(usage="%prog [-v] -a 123.123.123.123 -b 123.123.123.123 -u username -p password -s 123", version="%prog 1.0")
-    parser.add_option('-a','--server1', dest='srv1', help='fqdn or ip of server1') 
-    parser.add_option('-b','--server2', dest='srv2', help='fqdn or ip of server2')
+    parser.add_option('-a','--server1', dest='srv1', help='fqdn or ip of server1 (master server with type: masterslave)') 
+    parser.add_option('-b','--server2', dest='srv2', help='fqdn or ip of server2 (slave server with type: masterslave)')
     parser.add_option('-u','--user', dest='usr', help='Username to connect with')
     parser.add_option('-p','--password', dest='pwd', help='password to connect with')
     parser.add_option('-s','--behind', dest='behind', help='Max allow seconds behind master to warn [default: %default]', default=0)
