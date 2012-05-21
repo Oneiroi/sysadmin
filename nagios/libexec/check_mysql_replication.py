@@ -133,7 +133,7 @@ if __name__ == '__main__':
         bsPos = d[1]['srv2']['slave'][0][6]
         
         if amLog != bsLog:
-            critical('[master-master] binary log mismatch! peer slave reports master binary log of %s local master reports %s' % (amLog,bsLog))
+            critical('[master-master] binary log mismatch! peer slave reports master binary log of %s local master reports %s' % (bsLog,amLog))
 
         if amPos != bsPos:
             critical('[master-master] peer slave and local master out of sync! peer slave log pos %d local master log pos %d'%(amPos,bsPos)) 
@@ -143,10 +143,10 @@ if __name__ == '__main__':
         verbose(options.verbose,'srv2 -> srv1 binglog positional check')
 
         if bmLog != asLog:
-            critical('[master-master] binary log mismatch! local slave reports master binary log of %s peer master reports %s' % (bmLog,asLog))
+            critical('[master-master] binary log mismatch! local slave reports master binary log of %s peer master reports %s' % (asLog,bmLog))
 
         if bmPos != asPos:
-            critical('[master-master] local slave and peer master out of sync! local slave log pos %d peer master log pos %d'%(bmPos,asPos))
+            critical('[master-master] local slave and peer master out of sync! local slave log pos %d peer master log pos %d'%(asPos,bmPos))
         
         verbose(options.verbose,'srv2 -> srv1 binglog positional check passed')
         ok('master-master check completed, no issues were detected')
@@ -176,9 +176,9 @@ if __name__ == '__main__':
         bsPos = d[1]['srv2']['slave'][0][6]
         
         if amLog != bsLog:
-            critical('[master-slave] binary log mismatch! peer slave reports master binary log of %s local master reports %s' % (amLog,bsLog))
+            critical('[master-slave] binary log mismatch! peer slave reports master binary log of %s local master reports %s' % (bsLog,amLog))
         if amPos != bsPos:
-            critical('[master-slave] peer slave and local master out of sync! peer slave log pos %d local master log pos %d'%(amPos,bsPos)) 
+            critical('[master-slave] peer slave and local master out of sync! peer slave log pos %d local master log pos %d'%(bsPos,amPos)) 
         #If we get here everything is good!
         ok('[master-slave] check completed, no issues were detected')
     else:
