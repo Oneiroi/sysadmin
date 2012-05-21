@@ -151,7 +151,7 @@ if __name__ == '__main__':
         verbose(options.verbose,'srv2 -> srv1 binglog positional check passed')
         ok('master-master check completed, no issues were detected')
 
-    elif option.type == 'masterslave':
+    elif options.type == 'masterslave':
         #We're assuming server2 is the slave and server1 is the master, because yknow the master "comes" first /endpun
         #As with master master we need to run the same checks but in this case only A->B and not B<-A
         verbose(options.verbose,'type is masterslave')
