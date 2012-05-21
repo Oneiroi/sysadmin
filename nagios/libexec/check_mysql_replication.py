@@ -94,6 +94,7 @@ if __name__ == '__main__':
         
     """Type dependant execution"""
     verbose(options.verbose,'Opt validation passed moving onto type')
+    #@todo: as functionality is added, it can be broken out to individual functions to reduce code lines
     if options.type == 'mastermaster':
         verbose(options.verbose,'type is mastermaster')
         #Checking replication A -> B
@@ -108,7 +109,7 @@ if __name__ == '__main__':
         #@todo: replace the positional lookups with associative lookups if at all possible, will negate issues in field order changes if it should ever occur.
         
         verbose(options.verbose,'slave running check')
-        #Check slave is running!
+        #Check slave is running on both servers!
         if d[0]['srv1']['slave'][0][10] != 'Yes':
             critical('Slave_IO is not running on srv1(%s) returned: %s'%(options.srv1,d[0]['srv1']['slave'][0][10]))
         if d[1]['srv2']['slave'][0][10] != 'Yes':
@@ -132,25 +133,54 @@ if __name__ == '__main__':
         bsPos = d[1]['srv2']['slave'][0][6]
         
         if amLog != bsLog:
-            critical('Slave2 reports master binary log of %s master reports %s' % (amLog,bsLog))
+            critical('[master-master] binary log mismatch! peer slave reports master binary log of %s local master reports %s' % (amLog,bsLog))
 
         if amPos != bsPos:
-            critical('Slave2 and master out of sync! slave log post %d master log pos %d'%(amPos,bsPos)) 
+            critical('[master-master] peer slave and local master out of sync! peer slave log pos %d local master log pos %d'%(amPos,bsPos)) 
 
         verbose(options.verbose,'srv1 -> srv2 binglog positional check passed')
+        #Checking replication B->A
         verbose(options.verbose,'srv2 -> srv1 binglog positional check')
 
         if bmLog != asLog:
-            critical('Slave1 reports master binary log of %s master reports %s' % (bmLog,asLog))
+            critical('[master-master] binary log mismatch! local slave reports master binary log of %s peer master reports %s' % (bmLog,asLog))
 
         if bmPos != asPos:
-            critical('Slave1 and master out of sync! slave log post %d master log pos %d'%(bmPos,asPos))
+            critical('[master-master] local slave and peer master out of sync! local slave log pos %d peer master log pos %d'%(bmPos,asPos))
         
         verbose(options.verbose,'srv2 -> srv1 binglog positional check passed')
         ok('master-master check completed, no issues were detected')
 
-    elif option.type == 'somethingelse':
-        print 'do somethingelse'
+    elif option.type == 'masterslave':
+        #We're assuming server2 is the slave and server1 is the master, because yknow the master "comes" first /endpun
+        #As with master master we need to run the same checks but in this case only A->B and not B<-A
+        verbose(options.verbose,'type is masterslave')
+        #Checking replication A -> B
+        #We need A master and B slave status data, note this could be changed to just give slabe data from server B time allowing (more efficient).
+        p = Pool(2)
+        opts = {}
+        #Map options as the first arg to the data collection function
+        partial_repl = partial(_get_repl_data, options)
+        #Now give map 2 arguments to itterate
+        d = p.map(partial_repl,['srv1','srv2'])
+        
+        #Check Slave threads @ B ONLY!
+        if d[1]['srv2']['slave'][0][10] != 'Yes':
+            critical('[master-slave] Slave_IO is not running on peer(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave'][0][10]))
+        if d[1]['srv2']['slave'][0][10] != 'Yes':
+            critical('[master-slave] Slave_SQL is not running on peer(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave'][0][11]))
+        #Check replication
+        amLog = d[0]['srv1']['master'][0][0]
+        amPos = d[0]['srv1']['master'][0][1]
+        bsLog = d[1]['srv2']['slave'][0][5]
+        bsPos = d[1]['srv2']['slave'][0][6]
+        
+        if amLog != bsLog:
+            critical('[master-slave] binary log mismatch! peer slave reports master binary log of %s local master reports %s' % (amLog,bsLog))
+        if amPos != bsPos:
+            critical('[master-slave] peer slave and local master out of sync! peer slave log pos %d local master log pos %d'%(amPos,bsPos)) 
+        #If we get here everything is good!
+        ok('[master-slave] check completed, no issues were detected')
     else:
         critical('Type %s not supported' % (options.type))
         
