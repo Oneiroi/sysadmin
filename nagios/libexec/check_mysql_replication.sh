@@ -13,5 +13,5 @@ while getopts "a:b:u:p:s" opt; do
     esac
 done
 
-/usr/local/zenoss/common/libexec/check_mysql_replication.py -a $A -b $B -u $U -p $P
+/usr/bin/python /usr/local/zenoss/common/libexec/check_mysql_replication.py -a $A -b $B -u $U -p $P
 exit $?
