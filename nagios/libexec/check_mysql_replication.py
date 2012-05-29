@@ -35,6 +35,7 @@ def _get_repl_data(opts,sID):
     c = d.cursor()
     c.execute('SHOW SLAVE STATUS;')
     s = c.fetchall()
+    d.close()
     try:
         return {sID:{'master':m,'slave':s}}
     except:
