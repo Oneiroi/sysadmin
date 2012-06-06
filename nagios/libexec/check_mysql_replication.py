@@ -137,7 +137,10 @@ if __name__ == '__main__':
             critical('[master-master] binary log mismatch! peer slave reports master binary log of %s local master reports %s' % (bsLog,amLog))
 
         if amPos != bsPos:
-            critical('[master-master] peer slave and local master out of sync! peer slave log pos %d local master log pos %d'%(amPos,bsPos)) 
+            if (amPos - bsPos) >= options.log_pos_crit:
+                critical('[master-master] peer slave and local master out of sync! peer slave log pos %d local master log pos %d'%(amPos,bsPos))
+            elif (amPos - bsPos) >= options.log_pos_warn:
+                warn('[master-master] peer slave and local master out of sync! peer slave log pos %d local master log pos %d'%(amPos,bsPos))
 
         verbose(options.verbose,'srv1 -> srv2 binglog positional check passed')
         #Checking replication B->A
@@ -147,7 +150,10 @@ if __name__ == '__main__':
             critical('[master-master] binary log mismatch! local slave reports master binary log of %s peer master reports %s' % (asLog,bmLog))
 
         if bmPos != asPos:
-            critical('[master-master] local slave and peer master out of sync! local slave log pos %d peer master log pos %d'%(asPos,bmPos))
+            if (bmPos - asPos) >= options.log_pos_crit:
+                critical('[master-master] local slave and peer master out of sync! local slave log pos %d peer master log pos %d'%(asPos,bmPos))
+            elif (bmPos - asPos) >= options.log_pos_warn:
+                warn('[master-master] local slave and peer master out of sync! local slave log pos %d peer master log pos %d'%(asPos,bmPos))
         
         verbose(options.verbose,'srv2 -> srv1 binglog positional check passed')
         ok('master-master check completed, no issues were detected')
