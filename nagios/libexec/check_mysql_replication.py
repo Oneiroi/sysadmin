@@ -48,8 +48,6 @@ def _setopt():
     parser.add_option('-b','--server2', dest='srv2', help='fqdn or ip of server2 (slave server with type: masterslave)')
     parser.add_option('-u','--user', dest='usr', help='Username to connect with')
     parser.add_option('-p','--password', dest='pwd', help='password to connect with')
-    parser.add_option('-s','--behind', dest='behind', help='Max allow seconds behind master to warn [default: %default]', default=0)
-    parser.add_option('-c','--behind_crit', dest='behind_crit', help='Max allowed seconds behind master to critical [default: %default]', default=1)
     parser.add_option('-l','--log_pos_crit', dest='log_pos_crit', help='Max allowed variance between binlog positions beyond which will trigger critical [default: %default]', default=10)
     parser.add_option('-w','--log_pos_warn', dest='log_pos_warn', help='Max allowed variance between binlog positions beyond which will trigger warning [default: %default]', default=5)
     
@@ -185,7 +183,10 @@ if __name__ == '__main__':
         if amLog != bsLog:
             critical('[master-slave] binary log mismatch! peer slave reports master binary log of %s local master reports %s' % (bsLog,amLog))
         if amPos != bsPos:
-            critical('[master-slave] peer slave and local master out of sync! peer slave log pos %d local master log pos %d'%(bsPos,amPos)) 
+            if (amPos - bsPos) >= options.log_pos_crit:
+                critical('[master-master] peer slave and local master out of sync! peer slave log pos %d local master log pos %d'%(amPos,bsPos))
+            elif (amPos - bsPos) >= options.log_pos_warn:
+                warn('[master-master] peer slave and local master out of sync! peer slave log pos %d local master log pos %d'%(amPos,bsPos)) 
         #If we get here everything is good!
         ok('[master-slave] check completed, no issues were detected')
     else:
