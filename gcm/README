@@ -1,0 +1,7 @@
+Google Cloud Messaging,
+
+The code herein is code adapted from the examples on http://developer.android.com/guide/google/gcm/gs.html
+
+I am adapting this for use with monitoring systems such as Nagios and Zenoss.
+
+
