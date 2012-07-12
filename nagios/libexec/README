@@ -12,4 +12,4 @@ As IS
 
 I shouldn't have to mention all these checks are provided AS IS; I have only tested them so far as deploys I have done myself, if you run into problems, please raise an issue and I'll do my best to work on a fix.
 
-
+And more than likely the python style / functions in use are old ... (< 2.4)
