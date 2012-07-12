@@ -1,0 +1,15 @@
+ZenOSS Usage
+------------
+
+As Zenoss deploys a bundled python version on which the system is tested and built against; often my python scripts will fail when using them natively with ZenOSS.
+
+As such where applicable I have provided a service_name.sh file, this is a wrapper which unsets the relevant system env variables, and executes the check using the OS native python version.
+
+If you can think of a better way of doing these i.e. zenpacks then by all means let me know I'd be more than happy to review them and make the required changes.
+
+As IS
+-----
+
+I shouldn't have to mention all these checks are provided AS IS; I have only tested them so far as deploys I have done myself, if you run into problems, please raise an issue and I'll do my best to work on a fix.
+
+
