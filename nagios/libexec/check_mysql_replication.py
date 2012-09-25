@@ -123,7 +123,7 @@ if __name__ == '__main__':
         if d[0]['srv1']['slave']['Slave_IO_Running'] != 'Yes':
             critical('Slave_IO is not running on srv1(%s) returned: %s'%(options.srv1,d[0]['srv1']['slave']['Slave_IO_Running']))
         if d[1]['srv2']['slave']['Slave_IO_Running'] != 'Yes':
-            critical('Slave_IO is not running on srv2(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave'][0][10]))
+            critical('Slave_IO is not running on srv2(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave']['Slave_IO_Running']))
         if d[0]['srv1']['slave']['Slave_SQL_Running'] != 'Yes':
             critical('Slave_SQL is not running on srv1(%s) returned: %s'%(options.srv1,d[0]['srv1']['slave']['Slave_SQL_Running']))
         if d[1]['srv2']['slave']['Slave_SQL_Running'] != 'Yes':
@@ -194,9 +194,9 @@ if __name__ == '__main__':
         d = p.map(partial_repl,['srv1','srv2'])
         
         #Check Slave threads @ B ONLY!
-        if d[1]['srv2']['slave']['Slave_IO'] != 'Yes':
+        if d[1]['srv2']['slave']['Slave_IO_Running'] != 'Yes':
             critical('[master-slave] Slave_IO is not running on peer(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave']['Slave_IO']))
-        if d[1]['srv2']['slave']['Slave_SQL'] != 'Yes':
+        if d[1]['srv2']['slave']['Slave_SQL_Running'] != 'Yes':
             critical('[master-slave] Slave_SQL is not running on peer(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave']['Slave_SQL']))
         #Check replication
         amLog = d[0]['srv1']['master']['Position']
