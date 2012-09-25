@@ -131,9 +131,9 @@ if __name__ == '__main__':
         #We've had (albeit rare) occasions where the Slave_IO and Slave_SQL report YES, but replication has halted due to an error
         #So lets check for error conditions. (Note: During this time, sqconds_behind_master was constantly 0, and only when the error cleared
         # did this update).
-        if d[0]['srv1']['slave']['Last_Errno'] > 0:
+        if d[0]['srv1']['slave']['Last_Errno'] <> 0:
             critical('Slave is in error on srv1(%s) retured: %d %s' %(options.srv1, d[0]['srv1']['slave']['Last_Errno'],d[0]['srv1']['slave']['Last_Error'])) 
-        if d[1]['srv2']['slave']['Last_Errno'] > 0:
+        if d[1]['srv2']['slave']['Last_Errno'] <> 0:
             critical('Slave is in error on srv2(%s) retured: %d %s' %(options.srv2, d[1]['srv2']['slave']['Last_Errno'],d[1]['srv2']['slave']['Last_Error']))
         #Finally throw a warning if seconds_behind_master > 0
         if d[0]['srv1']['slave']['Seconds_Behind_Master'] > 0:
