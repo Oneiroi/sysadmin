@@ -197,7 +197,7 @@ if __name__ == '__main__':
         if d[1]['srv2']['slave']['Slave_IO'] != 'Yes':
             critical('[master-slave] Slave_IO is not running on peer(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave']['Slave_IO']))
         if d[1]['srv2']['slave']['Slave_SQL'] != 'Yes':
-            critical('[master-slave] Slave_SQL is not running on peer(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave']['Slave_SQL'])
+            critical('[master-slave] Slave_SQL is not running on peer(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave']['Slave_SQL']))
         #Check replication
         amLog = d[0]['srv1']['master']['Position']
         amPos = d[0]['srv1']['master']['File']
