@@ -18,7 +18,7 @@ __license__="GNU v3 + part 5d section 7: Redistribution/Reuse of this code is pe
 from optparse import OptionParser,OptionGroup, OptParseError
 
 import os,sys,optparse,re, time
-import MySQLdb
+import MySQLdb #Have to use MySQLdb as sqlalchemy fails to pickle for multiprocessing.
 from multiprocessing import Pool
 from functools import partial
 
@@ -30,20 +30,34 @@ def _get_repl_data(opts,sID):
     d = MySQLdb.connect(ip,opts.usr,opts.pwd)
     c = d.cursor()
     c.execute('SHOW MASTER STATUS;')
+    mdesc = c.description
     m = c.fetchall()
     c.close()
     c = d.cursor()
     c.execute('SHOW SLAVE STATUS;')
+    sdesc = c.description
     s = c.fetchall()
     d.close()
+
+    slave = {}
+    master = {}
+    #kludge together "assoc array" in dict form.
+    i=0
+    while i < mdesc.__len__():
+        master.update({mdesc[i][0]:m[0][i]})
+        i+=1
+    i=0
+    while i < sdesc.__len__():
+        slave.update({sdesc[i][0]:s[0][i]})
+        i+=1
     try:
-        return {sID:{'master':m,'slave':s}}
+        return {sID:{'master':master,'slave':slave}}
     except:
         return {}
  
 def _setopt():
     useage = '';
-    parser = OptionParser(usage="%prog [-v] -a 123.123.123.123 -b 123.123.123.123 -u username -p password -s 123", version="%prog 1.0")
+    parser = OptionParser(usage="%prog [-v] -a 123.123.123.123 -b 123.123.123.123 -u username -p password", version="%prog 1.0")
     parser.add_option('-a','--server1', dest='srv1', help='fqdn or ip of server1 (master server with type: masterslave)') 
     parser.add_option('-b','--server2', dest='srv2', help='fqdn or ip of server2 (slave server with type: masterslave)')
     parser.add_option('-u','--user', dest='usr', help='Username to connect with')
@@ -104,32 +118,42 @@ if __name__ == '__main__':
         partial_repl = partial(_get_repl_data, options)
         #Now give .map 2 arguments to itterate
         d = p.map(partial_repl,['srv1','srv2'])
-
-        #@todo: replace the positional lookups with associative lookups if at all possible, will negate issues in field order changes if it should ever occur.
-        
         verbose(options.verbose,'slave running check')
         #Check slave is running on both servers!
-        if d[0]['srv1']['slave'][0][10] != 'Yes':
-            critical('Slave_IO is not running on srv1(%s) returned: %s'%(options.srv1,d[0]['srv1']['slave'][0][10]))
-        if d[1]['srv2']['slave'][0][10] != 'Yes':
+        if d[0]['srv1']['slave']['Slave_IO_Running'] != 'Yes':
+            critical('Slave_IO is not running on srv1(%s) returned: %s'%(options.srv1,d[0]['srv1']['slave']['Slave_IO_Running']))
+        if d[1]['srv2']['slave']['Slave_IO_Running'] != 'Yes':
             critical('Slave_IO is not running on srv2(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave'][0][10]))
-        if d[0]['srv1']['slave'][0][10] != 'Yes':
-            critical('Slave_SQL is not running on srv1(%s) returned: %s'%(options.srv1,d[0]['srv1']['slave'][0][11]))
-        if d[1]['srv2']['slave'][0][10] != 'Yes':
-            critical('Slave_SQL is not running on srv2(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave'][0][11]))
+        if d[0]['srv1']['slave']['Slave_SQL_Running'] != 'Yes':
+            critical('Slave_SQL is not running on srv1(%s) returned: %s'%(options.srv1,d[0]['srv1']['slave']['Slave_SQL_Running']))
+        if d[1]['srv2']['slave']['Slave_SQL_Running'] != 'Yes':
+            critical('Slave_SQL is not running on srv2(%s) returned: %s'%(options.srv2,d[1]['srv2']['slave']['Slave_SQL_Running']))
+        #We've had (albeit rare) occasions where the Slave_IO and Slave_SQL report YES, but replication has halted due to an error
+        #So lets check for error conditions. (Note: During this time, sqconds_behind_master was constantly 0, and only when the error cleared
+        # did this update).
+        if d[0]['srv1']['slave']['Last_Errno'] > 0:
+            critical('Slave is in error on srv1(%s) retured: %d %s' %(options.srv1, d[0]['srv1']['slave']['Last_Errno'],d[0]['srv1']['slave']['Last_Error'])) 
+        if d[1]['srv2']['slave']['Last_Errno'] > 0:
+            critical('Slave is in error on srv2(%s) retured: %d %s' %(options.srv2, d[1]['srv2']['slave']['Last_Errno'],d[1]['srv2']['slave']['Last_Error']))
+        #Finally throw a warning if seconds_behind_master > 0
+        if d[0]['srv1']['slave']['Seconds_Behind_Master'] > 0:
+            warn('Slave(%s) is behind Master(%s) by %d seconds' % (options.srv1,options.srv2,d[0]['srv1']['slave']['Seconds_Behind_Master']))
+        if d[1]['srv2']['slave']['Seconds_Behind_Master'] > 0:
+            warn('Slave(%s) is behind Master(%s) by %d seconds' % (options.srv2,options.srv1,d[1]['srv2']['slave']['Seconds_Behind_Master']))
+
 
         verbose(options.verbose,'slave running check passed')
         verbose(options.verbose,'srv1 -> srv2 binglog positional check')
         #Ok compare now A master to B slave using positional data.
-        amLog = d[0]['srv1']['master'][0][0]
-        amPos = d[0]['srv1']['master'][0][1]
-        asLog = d[0]['srv1']['slave'][0][5]
-        asPos = d[0]['srv1']['slave'][0][6]
+        amLog = d[0]['srv1']['master']['File']
+        amPos = d[0]['srv1']['master']['Position']
+        asLog = d[0]['srv1']['slave']['Master_Log_File']
+        asPos = d[0]['srv1']['slave']['Read_Master_Log_Pos']
 
-        bmLog = d[1]['srv2']['master'][0][0]
-        bmPos = d[1]['srv2']['master'][0][1]
-        bsLog = d[1]['srv2']['slave'][0][5]
-        bsPos = d[1]['srv2']['slave'][0][6]
+        bmLog = d[1]['srv2']['master']['File']
+        bmPos = d[1]['srv2']['master']['Position']
+        bsLog = d[1]['srv2']['slave']['Master_Log_File']
+        bsPos = d[1]['srv2']['slave']['Read_Master_Log_Pos']
         
         if amLog != bsLog:
             critical('[master-master] binary log mismatch! peer slave reports master binary log of %s local master reports %s' % (bsLog,amLog))
