@@ -4,7 +4,7 @@
     Author: David Busby (http://saiweb.co.uk)
     Program: check mysql replication
     Description: Compares two mysql connections checking slave and master status, assumes master-master relationship
-    Copyright: Copyright (c) 2009,2010,2011,2012 David Busby (http://saiweb.co.uk)  & Psycle Interactive (http://psycle.com). All rights reserved.
+    Copyright: Copyright (c) 2008,2009,2010,2011,2012 David Busby (http://saiweb.co.uk)  & Psycle Interactive (http://psycle.com). All rights reserved.
     
     v0.1 - assumes master master relationship between two servers
 """
@@ -194,15 +194,15 @@ if __name__ == '__main__':
         d = p.map(partial_repl,['srv1','srv2'])
         
         #Check Slave threads @ B ONLY!
-        if d[1]['srv2']['slave'][0][10] != 'Yes':
-            critical('[master-slave] Slave_IO is not running on peer(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave'][0][10]))
-        if d[1]['srv2']['slave'][0][10] != 'Yes':
-            critical('[master-slave] Slave_SQL is not running on peer(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave'][0][11]))
+        if d[1]['srv2']['slave']['Slave_IO'] != 'Yes':
+            critical('[master-slave] Slave_IO is not running on peer(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave']['Slave_IO']))
+        if d[1]['srv2']['slave']['Slave_SQL'] != 'Yes':
+            critical('[master-slave] Slave_SQL is not running on peer(%s) returned: %s'%(options.srv2,d[0]['srv2']['slave']['Slave_SQL'])
         #Check replication
-        amLog = d[0]['srv1']['master'][0][0]
-        amPos = d[0]['srv1']['master'][0][1]
-        bsLog = d[1]['srv2']['slave'][0][5]
-        bsPos = d[1]['srv2']['slave'][0][6]
+        amLog = d[0]['srv1']['master']['Position']
+        amPos = d[0]['srv1']['master']['File']
+        bsLog = d[1]['srv2']['slave']['Master_Log_File']
+        bsPos = d[1]['srv2']['slave']['Read_Master_Loig_Pos']
         
         if amLog != bsLog:
             critical('[master-slave] binary log mismatch! peer slave reports master binary log of %s local master reports %s' % (bsLog,amLog))
