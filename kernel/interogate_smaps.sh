@@ -1,7 +1,6 @@
 #!/bin/bash
 
-#
-# Very quick script to get current swap usage
+# License: GNU v3
 # Author: David Busby oneiroi@fedoraproject.org http://blog.oneiroi.co.uk
 # Changes:
 #    v1.0 01 Aug 2012 Initial Release
