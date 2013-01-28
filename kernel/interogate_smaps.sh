@@ -9,8 +9,8 @@
 
 smaps_summary(){
   if [ -f "/proc/$1/smaps" ]; then
-    /usr/bin/cat /proc/$1/smaps |\
-    egrep 'Size|Rss|Pss|Shared_|Private|Reference|Anon|Swap|Kernel|MMU|Locked' | /usr/bin/sort -k1 |\
+    cat /proc/$1/smaps |\
+    egrep 'Size|Rss|Pss|Shared_|Private|Reference|Anon|Swap|Kernel|MMU|Locked' | sort -k1 |\
     awk '{x[$1] += $2} END { for ( k in x ) { printf "%s %s\t",k,x[k]}}'
     echo ""
   else
