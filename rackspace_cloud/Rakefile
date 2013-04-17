@@ -9,7 +9,7 @@ require "uri-handler"
 require "digest/md5"
 
 desc "Empty a cloudfiles container so it may be removed"
-task :cloudfilesempty do
+task :cloudfiles_container_empty do
     region = get_stdin("Which region are your cloudfiles located? (uk/us): ")
     abort ("Invalid selection made") unless ["uk", "us"].include?(region)
     container = get_stdin("What is the container name? (WARNING: all contents of this container will be irrecoverably deleted): ")
@@ -32,6 +32,61 @@ task :cloudfilesempty do
         container.delete_object(f)
         print "\r Removed #{i}/#{cdn_count}"
         i+=1
+    end
+end
+
+desc "Uses md5 digest information to upload differing files"
+task :cloudfiles_diff_upload do
+    region = get_stdin("Which region are your cloudfiles located? (uk/us): ")
+    abort ("Invalid selection made") unless ["uk", "us"].include?(region)
+    container = get_stdin("What is the container name? (WARNING: any differing content will be overwritten with the local copy): ")
+    if region == "uk"
+      cloudfiles_auth = CloudFiles::AUTH_UK
+    elsif region == "us"
+      cloudfiles_auth = CloudFiles::AUTH_US
+    end
+    pub_dir = get_stdin("Directory to sync from: ")
+    abort "Entered value is not a directory or does not exist" unless File.directory?(pub_dir)
+
+    cf = CloudFiles::Connection.new(
+        :username => get_stdin("What is your cloudfiles username?: "),
+        :api_key => get_stdin("What is your api key?: "),
+        :auth_url => "#{cloudfiles_auth}"
+    )
+    container = cf.container(container)
+    local_files = Find.find(pub_dir).map { |i| i }
+    local_files[0] = pub_dir.to_s
+    i = 0
+    c = 0
+    n = 0
+    local_files.each do |f|
+        i+=1
+        unless File.directory?(f)
+            rPath = f[pub_dir.to_s.length..-1]
+            begin
+                cfMeta = container.object(rPath).object_metadata
+                h = Digest::MD5.hexdigest(File.read(f))
+                if h != cfMeta[:etag]
+                    c+=1
+                    send = true
+                else
+                    send = false
+                end
+            rescue
+                n+=1
+                send = true
+            end
+            if send == true 
+                puts "    +".green + " Uploading -> " + rPath
+                fp = open(f,'r')
+                t = MIME::Types.type_for(f)
+                obj = container.create_object rPath,false
+                obj.write fp
+                obj.content_type = t[0].to_s
+                fp.close
+            end
+        end
+        print "\rChecked #{i}/#{local_files.count} Changed #{c} New #{n}"
     end
 end
 
