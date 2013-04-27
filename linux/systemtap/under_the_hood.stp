@@ -1,0 +1,75 @@
+#!/usr/bin/env stap
+
+
+/*
+  System tap script to collect and output the following in csv format.
+  1) disk I/O
+  2) CPU usage
+  3) memory usage
+  4) network usage 
+*/
+
+global io_stat,device
+global io_rb,io_wb,io_r,io_w
+global cpu_usage
+global mem_m,mem_u
+
+/* setup header */
+probe begin {
+  printf("%s,%s,%s,%s,%s,%s,%s,%s","UTIME","%CPU","MEM_MAPPED_BYTES","MEM_UNMAPPED_BYTES","DISK_WBYTES","DISK_RBYTES","DISK_WRITE_IOPS","DISK_READ_IOPS")
+}
+
+/* disk io, adapted from third_party/disktop.stp added iops */
+probe kernel.function("vfs_read").return {
+  if ($return>0) {
+    dev = __file_dev($file)
+    devname = __find_bdevname(dev,__file_bdev($file))
+
+    if (devname!="N/A") {/*skip read from cache*/
+      io_stat[pid(),execname(),uid(),ppid(),"R"] += $return
+      device[pid(),execname(),uid(),ppid(),"R"] = devname
+      io_rb += $return
+      io_r <<< 1;
+    }
+  }
+}
+
+probe kernel.function("vfs_write").return {
+  if ($return>0) {
+    dev = __file_dev($file)
+    devname = __find_bdevname(dev,__file_bdev($file))
+
+    if (devname!="N/A") { /*skip update cache*/
+      io_stat[pid(),execname(),uid(),ppid(),"W"] += $return
+      device[pid(),execname(),uid(),ppid(),"W"] = devname
+      io_wb += $return
+      io_w <<< 1;
+    }
+  }
+}
+
+/* memory io */
+
+probe kernel.function("sys_mmap"){
+  mem_m += $len
+}
+
+probe kernel.function("sys_munmap"){
+  mem_u += $len
+}
+
+/* cpu */
+probe timer.profile {
+  cpu_usage[cpu()]++
+}
+
+/* main loop */
+probe timer.ms(1000){
+  /*printf("%s,%s,%s,%s,%s,%s,%s,%s","UTIME","%CPU","MEM_MAPPED_BYTES","MEM_UNMAPPED_BYTES","DISK_WBYTES","DISK_RBYTES","DISK_WRITE_IOPS","DISK_READ_IOPS") */
+  all_cpus = 0
+  foreach([x] in cpu_usage){
+    all_cpus += cpu_usage[x]
+  }
+  printf("%d,%d,%d,%d,%d,%d,%d,%d\n",gettimeofday_ms(),all_cpus,mem_m,mem_u,io_wb,io_rb,io_w,io_r)
+   
+}
