@@ -1,0 +1,5 @@
+Utilities provided as Rake tasks for interacting with rackspace cloud,
+
+`rake list` or `rake -T` for a complete list.
+
+
