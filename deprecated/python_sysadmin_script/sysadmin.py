@@ -425,6 +425,8 @@ class sysadmin:
                      415:{'desc':'Unsupported Media Type','count':0},
                      416:{'desc':'Requested Range Not Satisfiable','count':0},
                      417:{'desc':'Expectation Failed','count':0},
+                     429:{'desc':'Too Many Requests', 'count':0},
+                     499:{'desc':'Client Closed Connection', 'count':0},
                      500:{'desc':'Internal Server Error','count':0},
                      501:{'desc':'Not Implemented','count':0},
                      502:{'desc':'Bad Gateway','count':0},
