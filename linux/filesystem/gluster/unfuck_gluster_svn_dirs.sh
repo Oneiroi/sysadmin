@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "ou may want to edit the script and remove the appropriate trusted.afr directories"
+echo "you may want to edit the script and remove the appropriate trusted.afr directories"
 [[ ! -d "$1" ]] && echo "Usage: $0 /path/to/filesystem (NOT MOUNTPOINT)" && exit 1;
 
 #pass 1 get .svn dirs and trash attrs
