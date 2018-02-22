@@ -17,10 +17,12 @@ def main():
             if passHash[:5] + line.split(':')[0] == passHash:
                 #We have a match, print this out
                 print 
-                print "[WARNING] Your password was noted on pwnedpasswords %s times" % line.split(':')[1]
-                break
+                print "[WARN] Your password was noted on pwnedpasswords %s times" % line.split(':')[1]
+                return
     #Clean up (Just to err on the side of paranoia)
     del passHash
+    #_IF_ we are here, we can assume that there has been no matches
+    print "[INFO] Good news, I could not find a match on api.pwnedpasswords.com, this does not count as endorsement for this password however"
 
 if __name__ == '__main__':
     main()
