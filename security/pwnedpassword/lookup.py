@@ -11,7 +11,8 @@ def main():
     passHash = sha1(getpass("Please provide the password to check: ")).hexdigest().upper()
     req  = get("https://api.pwnedpasswords.com/range/%s" % passHash[:5])
     if req:
-        #pwnedpasswords API returns the hash suffice with count, with passHash[:5] being the hash prefix
+        #pwnedpasswords API returns the hash suffix:count, with passHash[:5] being the hash prefix
+        #So the returned line will be passHash:count _IF_ there is a match
         for line in req.text.split('\n'):
             if passHash[:5] + line.split(':')[0] == passHash:
                 #We have a match, print this out
