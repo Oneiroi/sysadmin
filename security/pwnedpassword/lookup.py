@@ -17,7 +17,7 @@ def main():
             if passHash[:5] + line.split(':')[0] == passHash:
                 #We have a match, print this out
                 print 
-                print "[WARN] Your password was noted on pwnedpasswords %s times" % line.split(':')[1]
+                print "[WARN] Your password was noted on pwnedpasswords %s times" % line.split(':')[1].strip()
                 return
     #Clean up (Just to err on the side of paranoia)
     del passHash
